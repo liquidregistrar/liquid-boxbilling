@@ -619,7 +619,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     {
         # cek aktif g extensi curl nya
         if (!extension_loaded("curl")) {
-            throw new LiquidRegistrarApiException("PHP extension curl must be loaded.");
+            throw new Registrar_Exception("PHP extension curl must be loaded.");
         }
 
         // kalau testMode kosong berarti pake live
@@ -640,7 +640,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         # cek init error tidak
         if (($ch = curl_init($request_url)) === false) {
-            throw new LiquidRegistrarApiException("PHP extension curl must be loaded.");
+            throw new Registrar_Exception("PHP extension curl must be loaded.");
         }
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
@@ -678,7 +678,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         # langsung cek respon
         if (!$response) {
-            throw new LiquidRegistrarApiException($curl_error ? $curl_error : "Unable to request data from " . $request_url);
+            throw new Registrar_Exception($curl_error ? $curl_error : "Unable to request data from " . $request_url);
         }
 
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
