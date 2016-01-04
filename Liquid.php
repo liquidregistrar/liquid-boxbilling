@@ -19,34 +19,63 @@
 /**
  * HTTP API documentation http://liquid-docs.readthedocs.org/en/latest/restapi.html
  */
-class Registrar_Adapter_Custom extends Registrar_AdapterAbstract
+class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 {
     public $config = array(
-        'use_whois'   => FALSE,
+        'userid'   => null,
+        'password' => null,
+        'api-key'  => null,
     );
+    public function isKeyValueNotEmpty($array, $key)
+    {
+        $value = isset ($array[$key]) ? $array[$key] : '';
+        if (strlen(trim($value)) == 0){
+            return false;
+        }
+        return true;
+    }
     public function __construct($options)
     {
-        if(isset($options['use_whois'])) {
-            $this->config['use_whois'] = (bool)$options['use_whois'];
+        if (!extension_loaded('curl')) {
+            throw new Registrar_Exception('CURL extension is not enabled');
         }
-    }
-    public function getTlds()
-    {
-        return array();
+        if(isset($options['userid']) && !empty($options['userid'])) {
+            $this->config['userid'] = $options['userid'];
+            unset($options['userid']);
+        } else {
+            throw new Registrar_Exception('Domain registrar "Liquid" is not configured properly. Please update configuration parameter "Liquid Reseller ID" at "Configuration -> Domain registration".');
+        }
+        if(isset($options['api-key']) && !empty($options['api-key'])) {
+            $this->config['api-key'] = $options['api-key'];
+            unset($options['api-key']);
+        } else {
+            throw new Registrar_Exception('Domain registrar "Liquid" is not configured properly. Please update configuration parameter "Liquid API Key" at "Configuration -> Domain registration".');
+        }
     }
     
     public static function getConfig()
     {
         return array(
-            'label' => 'Custom Registrar always responds with positive results. Usefull if no other registrar is suitable.',
+            'label'     =>  'Manages domains on Liquid via API. Liquid requires your server IP in order to work. Login to the Liquid control panel (the url will be in the email you received when you signed up with them) and then go to Settings -> API and enter the IP address of the server where BoxBilling is installed to authorize it for API access.',
             'form'  => array(
-                'use_whois' => array('radio', array(
-                            'multiOptions' => array('1'=>'Yes', '0'=>'No'),
-                            'label' => 'Use WHOIS to check for domain availability',
-                    ),
-                 ),
+                'userid' => array('text', array(
+                            'label' => 'Reseller ID. You can get this at Liquid control panel Profile -> Reseller ID',
+                            'description'=> 'Liquid Reseller ID'
+                        ),
+                     ),
+                'api-key' => array('password', array(
+                            'label' => 'Liquid API Key',
+                            'description'=> 'You can get this at Liquid control panel, go to Settings -> API',
+                            'required' => false,
+                        ),
+                     ),
             ),
         );
+    }
+
+    public function getTlds()
+    {
+        return array();
     }
     
     public function isDomainCanBeTransfered(Registrar_Domain $domain)
