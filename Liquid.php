@@ -100,11 +100,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     public function isDomainAvailable(Registrar_Domain $domain)
     {
         $params = array(
-            'domain-name'           =>  $domain->getSld(),
-            'tlds'                  =>  array($domain->getTld(false)),
-            'suggest-alternative'   =>  false,
+            'domain'           =>  $domain->getSld().'.'.$domain->getTld(false)
         );
-        $result = $this->_makeRequest('domains/available', $params);
+        $result = $this->_makeRequest('domains/availability', 'get', array(), $this->config['userid'], $this->config['api-key'], $params);
+        throw new Registrar_Exception(json_encode($result), 101);
         if(!isset($result[$domain->getName()])) {
             return true;
         }
@@ -615,53 +614,131 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      * @return string
      * @throws Registrar_Exception
      */
-    protected function _makeRequest($url ,$params = array(), $method = 'GET', $type = 'json')
+    // protected function _makeRequest($url ,$params = array(), $method = 'GET', $type = 'json')
+    protected function _makeRequest($url, $method = 'get', $postfields = array(), $user = '', $pass = '', $params)
     {
-        $params = $this->includeAuthorizationParams($params);
-        $opts = array(
-            CURLOPT_CONNECTTIMEOUT  => 30,
-            CURLOPT_RETURNTRANSFER  => true,
-            CURLOPT_TIMEOUT         => 60,
-            CURLOPT_URL             => $this->_getApiUrl().$url.'.'.$type,
-            CURLOPT_SSL_VERIFYHOST  =>  0,
-            CURLOPT_SSL_VERIFYPEER  =>  0,
-        );
-        if($method == 'POST') {
-            $opts[CURLOPT_POST]         = 1;
-            $opts[CURLOPT_POSTFIELDS]   = $this->_formatParams($params);
-            $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL].'?'.$opts[CURLOPT_POSTFIELDS]);
+        # cek aktif g extensi curl nya
+        if (!extension_loaded("curl")) {
+            throw new LiquidRegistrarApiException("PHP extension curl must be loaded.");
+        }
+
+        // kalau testMode kosong berarti pake live
+        if (!$this->isTestEnv()) {
+            $api_url = 'https://api.liqu.id/';
         } else {
-            $opts[CURLOPT_URL]  = $opts[CURLOPT_URL].'?'.$this->_formatParams($params);
-            $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL]);
+            // kalau ada testmode berarti pake domainsas
+            $api_url = 'https://api.domainsas.com/';
         }
-        $ch = curl_init();
-        curl_setopt_array($ch, $opts);
-        $result = curl_exec($ch);
-        if ($result === false) {
-            $e = new Registrar_Exception(sprintf('CurlException: "%s"', curl_error($ch)));
-            $this->getLog()->err($e);
-            curl_close($ch);
-            throw $e;
+
+        // tambahan kalo di commerce whmcs di kasih TestJcampBizMode, yang ini pake api liquid
+        // if (!empty($params["TestJcampNetMode"])) {
+        //     $api_url = 'https://api.liquid.jcamp.net/';
+        // }
+
+        $API_VERSION = "v1";
+        $request_url = $api_url . $API_VERSION . $url;
+
+        # cek init error tidak
+        if (($ch = curl_init($request_url)) === false) {
+            throw new LiquidRegistrarApiException("PHP extension curl must be loaded.");
         }
+
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        if (empty(!$this->isTestEnv())) { // kalau ke domainsas di false aja verify nya
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
+        switch ($method) {
+            case 'get':
+                curl_setopt($ch, CURLOPT_HTTPGET, 1);
+                break;
+            case 'post':
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+                break;
+            case 'put':
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+                break;
+            case 'delete':
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+                break;
+        }
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, "$user:$pass");
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
+
+        $response   = curl_exec($ch);
+        $curl_error = curl_error($ch);
+
+        # langsung cek respon
+        if (!$response) {
+            throw new LiquidRegistrarApiException($curl_error ? $curl_error : "Unable to request data from " . $request_url);
+        }
+
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $header      = substr($response, 0, $header_size);
+        $body        = substr($response, $header_size);
+        $code        = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        $this->getLog()->info('API RESULT: '.$result);
+        $return = array(
+            'header' => http_parse_headers($header),
+            'body'   => json_decode($body, true),
+            'code'   => $code,
+        );
+
+        return $return;
+
+        // $params = $this->includeAuthorizationParams($params);
+        // $opts = array(
+        //     CURLOPT_CONNECTTIMEOUT  => 30,
+        //     CURLOPT_RETURNTRANSFER  => true,
+        //     CURLOPT_TIMEOUT         => 60,
+        //     CURLOPT_URL             => $this->_getApiUrl().$url.'.'.$type,
+        //     CURLOPT_SSL_VERIFYHOST  =>  0,
+        //     CURLOPT_SSL_VERIFYPEER  =>  0,
+        // );
+        // if($method == 'POST') {
+        //     $opts[CURLOPT_POST]         = 1;
+        //     $opts[CURLOPT_POSTFIELDS]   = $this->_formatParams($params);
+        //     $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL].'?'.$opts[CURLOPT_POSTFIELDS]);
+        // } else {
+        //     $opts[CURLOPT_URL]  = $opts[CURLOPT_URL].'?'.$this->_formatParams($params);
+        //     $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL]);
+        // }
+        // $ch = curl_init();
+        // curl_setopt_array($ch, $opts);
+        // $result = curl_exec($ch);
+        // if ($result === false) {
+        //     $e = new Registrar_Exception(sprintf('CurlException: "%s"', curl_error($ch)));
+        //     $this->getLog()->err($e);
+        //     curl_close($ch);
+        //     throw $e;
+        // }
+        // curl_close($ch);
+        // $this->getLog()->info('API RESULT: '.$result);
         
-        // response checker
-        $json = json_decode($result, true);
-        if(!is_array($json)) {
-            return $result;
-        }
-        if(isset($json['status']) && $json['status'] == 'ERROR') {
-            throw new Registrar_Exception($json['message'], 101);
-        }
-        if(isset($json['status']) && $json['status'] == 'error') {
-            throw new Registrar_Exception($json['error'], 102);
-        }
+        // // response checker
+        // $json = json_decode($result, true);
+        // if(!is_array($json)) {
+        //     return $result;
+        // }
+        // if(isset($json['status']) && $json['status'] == 'ERROR') {
+        //     throw new Registrar_Exception($json['message'], 101);
+        // }
+        // if(isset($json['status']) && $json['status'] == 'error') {
+        //     throw new Registrar_Exception($json['error'], 102);
+        // }
         
-        if(isset($json['status']) && $json['status'] == 'Failed') {
-            throw new Registrar_Exception($json['actionstatusdesc'], 103);
-        }
-        return $json;
+        // if(isset($json['status']) && $json['status'] == 'Failed') {
+        //     throw new Registrar_Exception($json['actionstatusdesc'], 103);
+        // }
+        // return $json;
     }
     /**
      * Convert params to Liquid format
