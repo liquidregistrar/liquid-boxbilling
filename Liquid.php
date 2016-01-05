@@ -102,7 +102,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = array(
             'domain'           =>  $domain->getSld().'.'.$domain->getTld(false)
         );
-        $result = $this->_makeRequest('domains/availability', 'get', array(), $this->config['userid'], $this->config['api-key'], $params);
+        $result = $this->_makeRequest('/domains/availability', 'get', array(), $this->config['userid'], $this->config['api-key'], $params);
         throw new Registrar_Exception(json_encode($result), 101);
         if(!isset($result[$domain->getName()])) {
             return true;
@@ -687,9 +687,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $code        = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         $return = array(
-            'header' => http_parse_headers($header),
+            // 'header' => http_parse_headers($header),
             'body'   => json_decode($body, true),
             'code'   => $code,
+            'return' => $response,
         );
 
         return $return;
