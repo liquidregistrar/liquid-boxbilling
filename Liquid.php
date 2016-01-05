@@ -690,8 +690,12 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             // 'header' => http_parse_headers($header),
             'body'   => json_decode($body, true),
             'code'   => $code,
-            'return' => $response,
+            // 'return' => $response,
         );
+
+        if(isset($return['body']['message']) && $return['code'] != 200) {
+            throw new Registrar_Exception($return['body']['message'], $return['code']);
+        }
 
         return $return;
 
