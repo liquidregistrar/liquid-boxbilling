@@ -293,14 +293,17 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $tech_contact_id    = $get_defaultContact['tech_contact']['contact_id'];
         $billing_contact_id = $get_defaultContact['billing_contact']['contact_id'];
 
-        $ns = $domain->getNs1();
-        $ns .= $domain->getNs2();
+        $ns_ = array();
+        $ns_[] = $domain->getNs1();
+        $ns_[] = $domain->getNs2();
         if($domain->getNs3())  {
-            $ns .= $domain->getNs3();
+            $ns_[] = $domain->getNs3();
         }
         if($domain->getNs4())  {
-            $ns .= $domain->getNs4();
+            $ns_[] = $domain->getNs4();
         }
+
+        $ns = implode(',', $ns_);
 
         $params = array(
             'domain_name'       =>  $domain->getName(),
@@ -337,8 +340,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         //     $params['attr-value4'] = '1';
         // }
         
+        throw new Registrar_Exception(json_encode($params));
         $result = $this->_makeRequest('/domains', $params, 'post');
-        throw new Registrar_Exception(json_encode($result));
         return ($result['status'] == 'Success');
     }
     public function renewDomain(Registrar_Domain $domain)
