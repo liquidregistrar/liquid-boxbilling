@@ -337,9 +337,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         //     $params['attr-name4'] = 'isAUWarranty';
         //     $params['attr-value4'] = '1';
         // }
-        throw new Registrar_Exception(json_encode($params));
         
-        $result = $this->_makeRequest('domains/register', $params, 'POST');
+        $result = $this->_makeRequest('/domains', $params, 'post');
+        throw new Registrar_Exception(json_encode($result));
         return ($result['status'] == 'Success');
     }
     public function renewDomain(Registrar_Domain $domain)
