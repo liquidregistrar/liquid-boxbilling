@@ -99,10 +99,18 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     public function isDomainAvailable(Registrar_Domain $domain)
     {
-        $params = array(
-            'domain'           =>  $domain->getSld().'.'.$domain->getTld(false)
-        );
-        $result = $this->_makeRequest('/domains/availability', 'get', array(), $this->config['userid'], $this->config['api-key'], $params);
+        // $params = array(
+        //     'domain' =>  $domain->getSld().'.'.$domain->getTld(false)
+        // );
+        $domain = $domain->getSld().'.'.$domain->getTld(false);
+        $result = $this->_makeRequest('/domains/availability?domain='.$domain, 'get', array(), $this->config['userid'], $this->config['api-key'], array());
+
+        if(isset($result['body']['status']) AND $result['body']['status'] != 'available') {
+            throw new Registrar_Exception($result);
+        } else {
+            throw new Registrar_Exception('oke');
+            // return true;
+        }
         throw new Registrar_Exception(json_encode($result), 101);
         if(!isset($result[$domain->getName()])) {
             return true;
