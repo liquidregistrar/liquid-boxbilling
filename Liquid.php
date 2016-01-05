@@ -132,13 +132,13 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         $domain_id = $this->_getDomainOrderId($domain);
 
-        $params['ns'] = implode(',', $nameserver);
-        $result = $this->_makeRequest('/domains/' . $domain_id . '/ns', $params, 'put');
+        $params['ns'] = implode(',', $ns);
+        $result = $this->_makeRequest('domains/' . $domain_id . '/ns', $params, 'put');
 
         if (is_array($result)) {
             $result['status'] = 'Success';
         }
-        
+
         return ($result['status'] == 'Success');
     }
     public function modifyContact(Registrar_Domain $domain)
