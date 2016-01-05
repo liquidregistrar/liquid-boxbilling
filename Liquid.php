@@ -99,7 +99,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     public function isDomainAvailable(Registrar_Domain $domain)
     {
-        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), array(), 'get');
+        $result = $this->_makeRequest('domains/availability?domain='.$domain->getName(), array(), 'get');
 
         foreach ($result as $val) {
             $check = $val[$domain->getName()];
@@ -115,7 +115,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = array(
             'domain_name'       =>  $domain->getName(),
         );
-        $result = $this->_makeRequest('/domains/transfer/validity', $params, 'post');
+        $result = $this->_makeRequest('domains/transfer/validity', $params, 'post');
         return ($result == true);
     }
     public function modifyNs(Registrar_Domain $domain)
@@ -209,7 +209,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'exact_domain_name' => '1'
         ));
 
-        $result_search = $this->_makeRequest('/domains?'.$param_search);
+        $result_search = $this->_makeRequest('domains?'.$param_search);
 
         if (!empty($result_search) AND is_array($result_search)) {
             foreach ($result_search as $res) {
@@ -228,7 +228,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         //     'order-id'      =>  $orderid,
         //     'options'       =>  'All',
         // );
-        $data = $this->_makeRequest('/domains/'.$domain_id.'?fields=all');
+        $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
         $d->setRegistrationTime($data['start_date']);
         $d->setExpirationTime($data['end_date']);
@@ -257,7 +257,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $c->setAddress3($wc['address_line_3']);
         }
         $d->setContactRegistrar($c);
-        
+
         if(isset($data['ns1'])) {
             $d->setNs1($data['ns1']);
         }
@@ -360,12 +360,12 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         // }
 
         try {
-            $result = $this->_makeRequest('/domains', $params, 'post');
+            $result = $this->_makeRequest('domains', $params, 'post');
         } catch(Registrar_Exception $e) {
             // jika gagal karena NS, set ns ke liqu.id
             if (strpos($e->getMessage(), "is not valid NameServer")) {
                 $params['ns'] = 'ns1.liqu.id,ns2.liqu.id';
-                $result = $this->_makeRequest('/domains', $params, 'post');
+                $result = $this->_makeRequest('domains', $params, 'post');
             }
         }
         
@@ -442,10 +442,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     private function _getCustomerDetails(Registrar_Domain $domain, $cust_email)
     {
         try {
-            $result = $this->_makeRequest('/customers?limit=100&page_no=1&status=Active&email='.$cust_email);
+            $result = $this->_makeRequest('customers?limit=100&page_no=1&status=Active&email='.$cust_email);
         } catch(Registrar_Exception $e) {
             $this->_createCustomer($domain);
-            $result = $this->_makeRequest('/customers?limit=100&page_no=1&status=Active&email='.$cust_email);
+            $result = $this->_makeRequest('customers?limit=100&page_no=1&status=Active&email='.$cust_email);
         }
         return $result;
     }
@@ -605,7 +605,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         //     'customer-id'   =>  $customer_id,
         //     'type'          =>  'Contact',
         // );
-        return $this->_makeRequest('/customers/'.$customer_id.'/contacts/default');
+        return $this->_makeRequest('customers/'.$customer_id.'/contacts/default');
     }
     private function removeCustomer($params)
     {
@@ -684,7 +684,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         // }
 
         $API_VERSION = "v1";
-        $request_url = $api_url . $API_VERSION . $url;
+        $request_url = $api_url . $API_VERSION . '/' . $url;
 
         # cek init error tidak
         if (($ch = curl_init($request_url)) === false) {
