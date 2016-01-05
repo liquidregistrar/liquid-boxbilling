@@ -99,7 +99,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     public function isDomainAvailable(Registrar_Domain $domain)
     {
-        $result = $this->_request('/domains/availability?domain='.$domain->getName(), 'get', array(), $this->config['userid'], $this->config['api-key'], array());
+        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), 'get', array(), $this->config['userid'], $this->config['api-key'], array());
 
         foreach ($result['body'] as $val) {
             $check = $val[$domain->getName()];
@@ -115,7 +115,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = array(
             'domain-name'       =>  $domain->getName(),
         );
-        $result = $this->_request('domains/validate-transfer', $params, 'GET');
+        $result = $this->_makeRequest('domains/validate-transfer', $params, 'GET');
         return (strtolower($result) == 'true');
     }
     public function modifyNs(Registrar_Domain $domain)
@@ -133,7 +133,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'order-id'  =>  $this->_getDomainOrderId($domain),
             'ns'        =>  $ns,
         );
-        $result = $this->_request('domains/modify-ns', $params, 'POST');
+        $result = $this->_makeRequest('domains/modify-ns', $params, 'POST');
         return ($result['status'] == 'Success');
     }
     public function modifyContact(Registrar_Domain $domain)
@@ -161,7 +161,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'state'             =>  $c->getState(),
         );
         $params = array_merge($optional_params, $required_params);
-        $result = $this->_request('contacts/modify', $params, 'POST');
+        $result = $this->_makeRequest('contacts/modify', $params, 'POST');
         return ($result['status'] == 'Success');
     }
     public function transferDomain(Registrar_Domain $domain)
@@ -194,14 +194,14 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $required_params['attr-name1'] = 'cedcontactid';
             $required_params['attr-value1'] = "default";
         }
-        return $this->_request('domains/transfer', $required_params, 'POST');
+        return $this->_makeRequest('domains/transfer', $required_params, 'POST');
     }
     private function _getDomainOrderId(Registrar_Domain $d)
     {
         $required_params = array(
             'domain-name'   =>  $d->getName(),
         );
-        return $this->_request('domains/orderid', $required_params);
+        return $this->_makeRequest('domains/orderid', $required_params);
     }
     public function getDomainDetails(Registrar_Domain $d)
     {
@@ -210,7 +210,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'order-id'      =>  $orderid,
             'options'       =>  'All',
         );
-        $data = $this->_request('domains/details', $params);
+        $data = $this->_makeRequest('domains/details', $params);
         
         $d->setRegistrationTime($data['creationtime']);
         $d->setExpirationTime($data['endtime']);
@@ -259,7 +259,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $required_params = array(
             'order-id'  =>  $this->_getDomainOrderId($domain),
         );
-        $result = $this->_request('domains/delete', $required_params, 'POST');
+        $result = $this->_makeRequest('domains/delete', $required_params, 'POST');
         return (strtolower($result['status']) == 'success');
     }
     public function registerDomain(Registrar_Domain $domain)
@@ -316,7 +316,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $params['attr-value4'] = '1';
         }
         
-        $result = $this->_request('domains/register', $params, 'POST');
+        $result = $this->_makeRequest('domains/register', $params, 'POST');
         return ($result['status'] == 'Success');
     }
     public function renewDomain(Registrar_Domain $domain)
@@ -327,7 +327,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'exp-date'          =>  $domain->getExpirationTime(),
             'invoice-option'    =>  'NoInvoice',
         );
-        $result = $this->_request('domains/renew', $params, 'POST');
+        $result = $this->_makeRequest('domains/renew', $params, 'POST');
         return ($result['actionstatus'] == 'Success');
     }
     public function enablePrivacyProtection(Registrar_Domain $domain)
@@ -338,7 +338,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'protect-privacy' =>  true,
             'reason'          =>  'Owners decision',
         );
-        $result = $this->_request('domains/modify-privacy-protection', $params, 'POST');
+        $result = $this->_makeRequest('domains/modify-privacy-protection', $params, 'POST');
         return (strtolower($result['actionstatus']) == 'success');
     }
     public function disablePrivacyProtection(Registrar_Domain $domain)
@@ -349,7 +349,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'protect-privacy' =>  false,
             'reason'          =>  'Owners decision',
         );
-        $result = $this->_request('domains/modify-privacy-protection', $params, 'POST');
+        $result = $this->_makeRequest('domains/modify-privacy-protection', $params, 'POST');
         return (strtolower($result['actionstatus']) == 'success');
     }
     public function getEpp(Registrar_Domain $domain)
@@ -358,7 +358,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'order-id'      =>  $this->_getDomainOrderId($domain),
             'options'       =>  'OrderDetails',
         );
-        $data = $this->_request('domains/details', $params);
+        $data = $this->_makeRequest('domains/details', $params);
         if(!isset($data['domsecret'])) {
             throw new Registrar_Exception('Domain EPP code can be retrieved from domain registrar');
         }
@@ -369,7 +369,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = array(
             'order-id'        =>  $this->_getDomainOrderId($domain),
         );
-        $result = $this->_request('domains/enable-theft-protection', $params, 'POST');
+        $result = $this->_makeRequest('domains/enable-theft-protection', $params, 'POST');
         return (strtolower($result['status']) == 'success');
     }
     public function unlock(Registrar_Domain $domain)
@@ -377,7 +377,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = array(
             'order-id'        =>  $this->_getDomainOrderId($domain),
         );
-        $result = $this->_request('domains/disable-theft-protection', $params, 'POST');
+        $result = $this->_makeRequest('domains/disable-theft-protection', $params, 'POST');
         return (strtolower($result['status']) == 'success');
     }
     
@@ -388,10 +388,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'username'       =>  $c->getEmail(),
         );
         try {
-            $result = $this->_request('customers/details', $params);
+            $result = $this->_makeRequest('customers/details', $params);
         } catch(Registrar_Exception $e) {
             $this->_createCustomer($domain);
-            $result = $this->_request('customers/details', $params);
+            $result = $this->_makeRequest('customers/details', $params);
         }
         return (array)$result;
     }
@@ -434,7 +434,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'mobile'                         =>  '',
         );
         $params = array_merge($optional_params, $params);
-        $customer_id = $this->_request('customers/signup', $params, 'POST');
+        $customer_id = $this->_makeRequest('customers/signup', $params, 'POST');
         return $customer_id;
     }
     
@@ -487,17 +487,17 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         if($tld == '.ru') {
             $contact['type'] =   'RuContact';
         }
-        $id = $this->_request('contacts/add', $contact, 'POST');
+        $id = $this->_makeRequest('contacts/add', $contact, 'POST');
         return $id;
     }
     
     private function getResellerDetails()
     {
-        return $this->_request('resellers/details');
+        return $this->_makeRequest('resellers/details');
     }
     private function getPromoPrices()
     {
-        return $this->_request('resellers/promo-details');
+        return $this->_makeRequest('resellers/promo-details');
     }
     /**
      * @see http://manage.Liquid.com/kb/answer/808
@@ -537,7 +537,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         );
         $params = $this->_checkRequiredParams($required_params, $params);
         $params = array_merge($optional_params, $params);
-        $result = $this->_request('resellers/signup', $params, 'POST');
+        $result = $this->_makeRequest('resellers/signup', $params, 'POST');
         if(isset($result['status']) && $result['status'] == 'AlreadyReseller') {
             throw new Registrar_Exception('You are already registered as reseller');
         }
@@ -549,7 +549,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'customer-id'   =>  $customerid,
             'type'          =>  'Contact',
         );
-        return $this->_request('contacts/default', $params, 'POST');
+        return $this->_makeRequest('contacts/default', $params, 'POST');
     }
     private function removeCustomer($params)
     {
@@ -557,7 +557,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'customer-id'   =>  '',
         );
         $params = $this->_checkRequiredParams($required_params, $params);
-        $result = $this->_request('customers/delete', $params, 'POST');
+        $result = $this->_makeRequest('customers/delete', $params, 'POST');
         return ($result == 'true');
     }
     
@@ -569,7 +569,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 'order-id'      =>  $orderid,
                 'options'       =>  'All',
             );
-            $data = $this->_request('domains/details', $params);
+            $data = $this->_makeRequest('domains/details', $params);
         } catch(Exception $e) {
             return false;
         }
@@ -581,7 +581,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     {
         return $this->_testMode;
     }
-
     /**
      * Api URL
      * @return string
@@ -593,7 +592,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
         return 'https://api.liqu.id/';
     }
-
     /**
      * @param array $params
      * @return array
@@ -605,7 +603,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'api-key' => $this->config['api-key'],
         ));
     }
-
     /**
      * Perform call to Api
      * @param string $url
@@ -614,8 +611,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      * @return string
      * @throws Registrar_Exception
      */
-    // protected function _request($url ,$params = array(), $method = 'GET', $type = 'json')
-    protected function _request($url, $method = 'get', $postfields = array(), $user = '', $pass = '')//, $params)
+    // protected function _makeRequest($url ,$params = array(), $method = 'GET', $type = 'json')
+    protected function _makeRequest($url, $method = 'get', $postfields = array(), $user = '', $pass = '', $params)
     {
         # cek aktif g extensi curl nya
         if (!extension_loaded("curl")) {
@@ -623,14 +620,12 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         // kalau testMode kosong berarti pake live
-        // if (!$this->isTestEnv()) {
-        //     $api_url = 'https://api.liqu.id/';
-        // } else {
-        //     // kalau ada testmode berarti pake domainsas
-        //     $api_url = 'https://api.domainsas.com/';
-        // }
-
-        $api_url = $this->_getApiUrl();
+        if (!$this->isTestEnv()) {
+            $api_url = 'https://api.liqu.id/';
+        } else {
+            // kalau ada testmode berarti pake domainsas
+            $api_url = 'https://api.domainsas.com/';
+        }
 
         // tambahan kalo di commerce whmcs di kasih TestJcampBizMode, yang ini pake api liquid
         // if (!empty($params["TestJcampNetMode"])) {
@@ -688,15 +683,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $body        = substr($response, $header_size);
         $code        = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
-        if (strpos($header, "404 Not Found")) {
-            throw new Registrar_Exception("Unable to request data from liquid server, Maybe URL is not valid");
-        }
-
         $return = array(
-            'header' => $header,
+            // 'header' => http_parse_headers($header),
             'body'   => json_decode($body, true),
             'code'   => $code,
+            // 'return' => $response,
         );
 
         if(isset($return['body']['message']) && $return['code'] != 200) {
@@ -704,8 +695,53 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         return $return;
-    }
 
+        // $params = $this->includeAuthorizationParams($params);
+        // $opts = array(
+        //     CURLOPT_CONNECTTIMEOUT  => 30,
+        //     CURLOPT_RETURNTRANSFER  => true,
+        //     CURLOPT_TIMEOUT         => 60,
+        //     CURLOPT_URL             => $this->_getApiUrl().$url.'.'.$type,
+        //     CURLOPT_SSL_VERIFYHOST  =>  0,
+        //     CURLOPT_SSL_VERIFYPEER  =>  0,
+        // );
+        // if($method == 'POST') {
+        //     $opts[CURLOPT_POST]         = 1;
+        //     $opts[CURLOPT_POSTFIELDS]   = $this->_formatParams($params);
+        //     $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL].'?'.$opts[CURLOPT_POSTFIELDS]);
+        // } else {
+        //     $opts[CURLOPT_URL]  = $opts[CURLOPT_URL].'?'.$this->_formatParams($params);
+        //     $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL]);
+        // }
+        // $ch = curl_init();
+        // curl_setopt_array($ch, $opts);
+        // $result = curl_exec($ch);
+        // if ($result === false) {
+        //     $e = new Registrar_Exception(sprintf('CurlException: "%s"', curl_error($ch)));
+        //     $this->getLog()->err($e);
+        //     curl_close($ch);
+        //     throw $e;
+        // }
+        // curl_close($ch);
+        // $this->getLog()->info('API RESULT: '.$result);
+        
+        // // response checker
+        // $json = json_decode($result, true);
+        // if(!is_array($json)) {
+        //     return $result;
+        // }
+        // if(isset($json['status']) && $json['status'] == 'ERROR') {
+        //     throw new Registrar_Exception($json['message'], 101);
+        // }
+        // if(isset($json['status']) && $json['status'] == 'error') {
+        //     throw new Registrar_Exception($json['error'], 102);
+        // }
+        
+        // if(isset($json['status']) && $json['status'] == 'Failed') {
+        //     throw new Registrar_Exception($json['actionstatusdesc'], 103);
+        // }
+        // return $json;
+    }
     /**
      * Convert params to Liquid format
      * @see http://manage.Liquid.com/kb/answer/755
@@ -908,20 +944,20 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 'status'        => 'Active',
                 'type'          => $type,
             );
-            $result = $this->_request('contacts/search', $params, 'GET', 'json');
+            $result = $this->_makeRequest('contacts/search', $params, 'GET', 'json');
             if($result['recsonpage'] < 1) {
                 throw new Registrar_Exception('Contact not found');
             }
             $existing_contact_id = $result['result'][0]['entity.entityid'];
-            $this->_request('contacts/delete', array('contact-id'=>$existing_contact_id), 'POST');
+            $this->_makeRequest('contacts/delete', array('contact-id'=>$existing_contact_id), 'POST');
         } catch(Registrar_Exception $e) {
             $this->getLog()->info($e->getMessage());
         }
-        return $this->_request('contacts/add', $contact, 'POST');
+        return $this->_makeRequest('contacts/add', $contact, 'POST');
     }
     private function getCARegistrantAgreementVersion()
     {
-        $agreement = $this->_request('contacts/dotca/registrantagreement', array(), 'GET', 'json');
+        $agreement = $this->_makeRequest('contacts/dotca/registrantagreement', array(), 'GET', 'json');
         return $agreement['version'];
     }
 }
