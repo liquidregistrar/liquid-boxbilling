@@ -620,12 +620,12 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         // kalau testMode kosong berarti pake live
-        if (!$this->isTestEnv()) {
-            $api_url = 'https://api.liqu.id/';
-        } else {
+        // if (!$this->isTestEnv()) {
+        //     $api_url = 'https://api.liqu.id/';
+        // } else {
             // kalau ada testmode berarti pake domainsas
             $api_url = 'https://api.domainsas.com/';
-        }
+        // }
 
         // tambahan kalo di commerce whmcs di kasih TestJcampBizMode, yang ini pake api liquid
         // if (!empty($params["TestJcampNetMode"])) {
@@ -642,11 +642,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        if (empty(!$this->isTestEnv())) { // kalau ke domainsas di false aja verify nya
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
-        } else {
+        // if (empty(!$this->isTestEnv())) { // kalau ke domainsas di false aja verify nya
+        //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+        // } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        }
+        // }
         switch ($method) {
             case 'get':
                 curl_setopt($ch, CURLOPT_HTTPGET, 1);
