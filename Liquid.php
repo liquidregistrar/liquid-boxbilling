@@ -284,7 +284,15 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 }
             }
         }
-        
+
+        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
+        $get_defaultContact = $this->_getDefaultContactDetails($customer_id);
+
+        $reg_contact_id     = $get_defaultContact['registrant_contact']['contact_id'];
+        $admin_contact_id   = $get_defaultContact['admin_contact']['contact_id'];
+        $tech_contact_id    = $get_defaultContact['tech_contact']['contact_id'];
+        $billing_contact_id = $get_defaultContact['billing_contact']['contact_id'];
+
         $ns = array();
         $ns[] = $domain->getNs1();
         $ns[] = $domain->getNs2();
@@ -295,43 +303,41 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $ns[] = $domain->getNs4();
         }
 
-        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
-        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getDefaultContactDetails($customer_id);
-        $get_defaultContact = $this->_getDefaultContactDetails($customer_id);
-        throw new Registrar_Exception(json_encode($get_defaultContact));
         $params = array(
-            'domain-name'       =>  $domain->getName(),
+            'domain_name'       =>  $domain->getName(),
+            'customer_id'       =>  $customer_id,
+            'registrant_contact_id'    =>  $reg_contact_id,
+            'billing_contact_id'=>  $billing_contact_id,
+            'admin_contact_id'  =>  $admin_contact_id,
+            'tech_contact_id'   =>  $tech_contact_id,
             'years'             =>  $domain->getRegistrationPeriod(),
             'ns'                =>  $ns,
-            'customer-id'       =>  $customer_id,
-            'reg-contact-id'    =>  $reg_contact_id,
-            'admin-contact-id'  =>  $admin_contact_id,
-            'tech-contact-id'   =>  $tech_contact_id,
-            'billing-contact-id'=>  $billing_contact_id,
-            'invoice-option'    =>  'NoInvoice',
-            'protect-privacy'   =>  false,
+            'purchase_privacy_protection'   => false,
+            'privacy_protection_enabled'    => false,
+            'invoice_option'    =>  'no_invoice',
         );
-        if($tld == '.asia') {
-            $params['attr-name1'] = 'cedcontactid';
-            $params['attr-value1'] = "default";
-        }
-        if($tld == '.de') {
-            $params['ns'] = array('dns1.directi.com', 'dns2.directi.com', 'dns3.directi.com', 'dns4.directi.com');
-        }
-        if ($tld == '.au' || $tld == '.net.au' || $tld == '.com.au'){
-            $contact = $domain->getContactRegistrar();
-            if(strlen(trim($contact->getCompanyNumber())) == 0 ) {
-                throw new Registrar_Exception('Valid contact company number is required while registering AU domain name');
-            }
-            $params['attr-name1'] = 'id-type';
-            $params['attr-value1'] = 'ACN';
-            $params['attr-name2'] = 'id';
-            $params['attr-value2'] = $contact->getCompanyNumber();
-            $params['attr-name3'] = 'policyReason';
-            $params['attr-value3'] = '1';
-            $params['attr-name4'] = 'isAUWarranty';
-            $params['attr-value4'] = '1';
-        }
+        // if($tld == '.asia') {
+        //     $params['attr-name1'] = 'cedcontactid';
+        //     $params['attr-value1'] = "default";
+        // }
+        // if($tld == '.de') {
+        //     $params['ns'] = array('dns1.directi.com', 'dns2.directi.com', 'dns3.directi.com', 'dns4.directi.com');
+        // }
+        // if ($tld == '.au' || $tld == '.net.au' || $tld == '.com.au'){
+        //     $contact = $domain->getContactRegistrar();
+        //     if(strlen(trim($contact->getCompanyNumber())) == 0 ) {
+        //         throw new Registrar_Exception('Valid contact company number is required while registering AU domain name');
+        //     }
+        //     $params['attr-name1'] = 'id-type';
+        //     $params['attr-value1'] = 'ACN';
+        //     $params['attr-name2'] = 'id';
+        //     $params['attr-value2'] = $contact->getCompanyNumber();
+        //     $params['attr-name3'] = 'policyReason';
+        //     $params['attr-value3'] = '1';
+        //     $params['attr-name4'] = 'isAUWarranty';
+        //     $params['attr-value4'] = '1';
+        // }
+        throw new Registrar_Exception(json_encode($params));
         
         $result = $this->_makeRequest('domains/register', $params, 'POST');
         return ($result['status'] == 'Success');
