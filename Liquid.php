@@ -99,7 +99,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     public function isDomainAvailable(Registrar_Domain $domain)
     {
-        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), 'get', array());
+        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), array(), 'get');
 
         foreach ($result['body'] as $val) {
             $check = $val[$domain->getName()];
@@ -113,9 +113,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     public function isDomainCanBeTransfered(Registrar_Domain $domain)
     {
         $params = array(
-            'domain-name'       =>  $domain->getName(),
+            'domain_name'       =>  $domain->getName(),
         );
-        $result = $this->_makeRequest('domains/validate-transfer', $params, 'GET');
+
+        $result = $this->_makeRequest('/domains/transfer/validity', $params, 'get');
+        
         return (strtolower($result) == 'true');
     }
     public function modifyNs(Registrar_Domain $domain)
@@ -613,8 +615,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      * @return string
      * @throws Registrar_Exception
      */
-    // protected function _makeRequest($url ,$params = array(), $method = 'GET', $type = 'json')
-    protected function _makeRequest($url, $method = 'get', $postfields = array())
+    protected function _makeRequest($url, $params = array(), $method = 'get')
     {
         # cek aktif g extensi curl nya
         if (!extension_loaded("curl")) {
@@ -650,16 +651,16 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 break;
             case 'post':
                 curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
                 break;
             case 'put':
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
                 break;
             case 'delete':
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
                 curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
                 break;
         }
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
