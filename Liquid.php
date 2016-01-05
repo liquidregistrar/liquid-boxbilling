@@ -284,8 +284,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 }
             }
         }
-
-        // $customer_id = $customer['customer_id'];
         
         $ns = array();
         $ns[] = $domain->getNs1();
@@ -298,7 +296,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
-        list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getDefaultContactDetails($customer_id);
+        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getDefaultContactDetails($customer_id);
+        $get_defaultContact = $this->_getDefaultContactDetails($customer_id);
+        throw new Registrar_Exception(json_encode($get_defaultContact));
         $params = array(
             'domain-name'       =>  $domain->getName(),
             'years'             =>  $domain->getRegistrationPeriod(),
