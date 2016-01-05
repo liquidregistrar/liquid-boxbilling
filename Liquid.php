@@ -129,11 +129,16 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         if($domain->getNs4())  {
             $ns[] = $domain->getNs4();
         }
-        $params = array(
-            'order-id'  =>  $this->_getDomainOrderId($domain),
-            'ns'        =>  $ns,
-        );
-        $result = $this->_makeRequest('domains/modify-ns', $params, 'POST');
+
+        $domain_id = $this->_getDomainOrderId($domain);
+
+        $params['ns'] = implode(',', $nameserver);
+        $result = $this->_makeRequest('/domains/' . $domain_id . '/ns', $params, 'put');
+
+        if (is_array($result)) {
+            $result['status'] = 'Success';
+        }
+        
         return ($result['status'] == 'Success');
     }
     public function modifyContact(Registrar_Domain $domain)
