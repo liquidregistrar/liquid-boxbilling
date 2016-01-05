@@ -581,6 +581,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     {
         return $this->_testMode;
     }
+
     /**
      * Api URL
      * @return string
@@ -588,21 +589,27 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     private function _getApiUrl()
     {
         if($this->isTestEnv()) {
+            // kalau ada testmode berarti pake domainsas
             return 'https://api.domainsas.com/';
         }
+        // kalau testMode kosong berarti pake live
         return 'https://api.liqu.id/';
     }
+
     /**
      * @param array $params
-     * @return array
+     * @return string
      */
-    public function includeAuthorizationParams(array $params)
+    public function includeAuthorization()
     {
-        return array_merge($params, array(
-            'auth-userid' => $this->config['userid'],
-            'api-key' => $this->config['api-key'],
-        ));
+        // return array_merge($params, array(
+        //     'auth-userid' => $this->config['userid'],
+        //     'api-key' => $this->config['api-key'],
+        // ));
+
+        return $this->config['userid'].':'.$this->config['api-key'];
     }
+
     /**
      * Perform call to Api
      * @param string $url
@@ -669,7 +676,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 break;
         }
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_USERPWD, "$user:$pass");
+        curl_setopt($ch, CURLOPT_USERPWD, $this->includeAuthorization());//"$user:$pass");
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
 
