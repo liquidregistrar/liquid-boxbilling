@@ -102,23 +102,28 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         // $params = array(
         //     'domain' =>  $domain->getSld().'.'.$domain->getTld(false)
         // );
-        $domain = $domain->getSld().'.'.$domain->getTld(false);
-        $result = $this->_makeRequest('/domains/availability?domain='.$domain, 'get', array(), $this->config['userid'], $this->config['api-key'], array());
 
-        if(isset($result['body']['status']) AND $result['body']['status'] != 'available') {
-            throw new Registrar_Exception($result);
-        } else {
-            throw new Registrar_Exception('oke');
-            // return true;
+        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), 'get', array(), $this->config['userid'], $this->config['api-key'], array());
+
+        foreach ($result['body'] as $val) {
+            $check = $val[$domain->getName()];
+            if($check && $check['status'] == 'available') {
+                return true;
+            }
+            // if(isset($val[$domain->getName()]['status']) AND $val[$domain->getName()]['status'] != 'available') {
+            //     return false;
+            // } else {
+            //     return true;
+            // }
         }
-        throw new Registrar_Exception(json_encode($result), 101);
-        if(!isset($result[$domain->getName()])) {
-            return true;
-        }
-        $check = $result[$domain->getName()];
-        if($check && $check['status'] == 'available') {
-            return true;
-        }
+
+        // if(!isset($result[$domain->getName()])) {
+        //     return true;
+        // }
+        // $check = $result[$domain->getName()];
+        // if($check && $check['status'] == 'available') {
+        //     return true;
+        // }
         return false;
     }
     public function isDomainCanBeTransfered(Registrar_Domain $domain)
