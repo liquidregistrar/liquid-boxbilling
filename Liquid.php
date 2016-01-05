@@ -269,8 +269,23 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
         
         $tld = $domain->getTld();
-        $customer = $this->_getCustomerDetails($domain);
-        $customer_id = $customer['customerid'];
+
+        $cust = $domain->getContactRegistrar();
+        $cust_email = $cust->getEmail();
+
+        // mendapatkan customer di LQ
+        $customer = $this->_getCustomerDetails($domain, $cust_email);
+
+        if (is_array($customer)) {
+            foreach ($customer as $cus) {
+                $cus['email'] = trim(strtolower($cus['email']));
+                if ($cus['email'] == $cust_email) {
+                    $customer_id = $cus['customer_id'];
+                }
+            }
+        }
+
+        // $customer_id = $customer['customer_id'];
         
         $ns = array();
         $ns[] = $domain->getNs1();
@@ -281,7 +296,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         if($domain->getNs4())  {
             $ns[] = $domain->getNs4();
         }
-        list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
+
+        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
+        list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getDefaultContactDetails($customer_id);
         $params = array(
             'domain-name'       =>  $domain->getName(),
             'years'             =>  $domain->getRegistrationPeriod(),
@@ -381,19 +398,15 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return (strtolower($result['status']) == 'success');
     }
     
-    private function _getCustomerDetails(Registrar_Domain $domain)
+    private function _getCustomerDetails(Registrar_Domain $domain, $cust_email)
     {
-        $c = $domain->getContactRegistrar();
-        $params = array(
-            'username'       =>  $c->getEmail(),
-        );
         try {
-            $result = $this->_makeRequest('customers/details', $params);
+            $result = $this->_makeRequest('/customers?limit=100&page_no=1&status=Active&email='.$cust_email);
         } catch(Registrar_Exception $e) {
             $this->_createCustomer($domain);
-            $result = $this->_makeRequest('customers/details', $params);
+            $result = $this->_makeRequest('/customers?limit=100&page_no=1&status=Active&email='.$cust_email);
         }
-        return (array)$result;
+        return $result;
     }
     private function _createCustomer(Registrar_Domain $domain)
     {
@@ -543,13 +556,15 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
         return $result;
     }
-    private function _getDefaultContactDetails(Registrar_Domain $domain, $customerid)
+
+    // private function _getDefaultContactDetails(Registrar_Domain $domain, $customer_id)
+    private function _getDefaultContactDetails($customer_id)
     {
-        $params = array(
-            'customer-id'   =>  $customerid,
-            'type'          =>  'Contact',
-        );
-        return $this->_makeRequest('contacts/default', $params, 'POST');
+        // $params = array(
+        //     'customer-id'   =>  $customer_id,
+        //     'type'          =>  'Contact',
+        // );
+        return $this->_makeRequest('/customers/'.$customer_id.'/contacts/default');
     }
     private function removeCustomer($params)
     {
