@@ -99,7 +99,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     public function isDomainAvailable(Registrar_Domain $domain)
     {
-        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), 'get', array(), $this->config['userid'], $this->config['api-key'], array());
+        $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), 'get', array());
 
         foreach ($result['body'] as $val) {
             $check = $val[$domain->getName()];
@@ -602,11 +602,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      */
     public function includeAuthorization()
     {
-        // return array_merge($params, array(
-        //     'auth-userid' => $this->config['userid'],
-        //     'api-key' => $this->config['api-key'],
-        // ));
-
         return $this->config['userid'].':'.$this->config['api-key'];
     }
 
@@ -619,20 +614,12 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      * @throws Registrar_Exception
      */
     // protected function _makeRequest($url ,$params = array(), $method = 'GET', $type = 'json')
-    protected function _makeRequest($url, $method = 'get', $postfields = array(), $user = '', $pass = '', $params)
+    protected function _makeRequest($url, $method = 'get', $postfields = array())
     {
         # cek aktif g extensi curl nya
         if (!extension_loaded("curl")) {
             throw new Registrar_Exception("PHP extension curl must be loaded.");
         }
-
-        // kalau testMode kosong berarti pake live
-        // if (!$this->isTestEnv()) {
-        //     $api_url = 'https://api.liqu.id/';
-        // } else {
-        //     // kalau ada testmode berarti pake domainsas
-        //     $api_url = 'https://api.domainsas.com/';
-        // }
 
         $api_url = $this->_getApiUrl();
 
@@ -676,7 +663,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 break;
         }
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_USERPWD, $this->includeAuthorization());//"$user:$pass");
+        curl_setopt($ch, CURLOPT_USERPWD, $this->includeAuthorization());
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
 
