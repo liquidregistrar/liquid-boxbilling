@@ -101,7 +101,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     {
         $result = $this->_makeRequest('/domains/availability?domain='.$domain->getName(), array(), 'get');
 
-        foreach ($result['body'] as $val) {
+        foreach ($result as $val) {
             $check = $val[$domain->getName()];
             if($check && $check['status'] == 'available') {
                 return true;
@@ -115,10 +115,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = array(
             'domain_name'       =>  $domain->getName(),
         );
-
-        $result = $this->_makeRequest('/domains/transfer/validity', $params, 'get');
-        
-        return (strtolower($result) == 'true');
+        $result = $this->_makeRequest('/domains/transfer/validity', $params, 'post');
+        return ($result == true);
     }
     public function modifyNs(Registrar_Domain $domain)
     {
@@ -696,7 +694,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             throw new Registrar_Exception($return['body']['message'], $return['code']);
         }
 
-        return $return;
+        # langsung return body nya saja
+        return $return['body'];
     }
     /**
      * Convert params to Liquid format
