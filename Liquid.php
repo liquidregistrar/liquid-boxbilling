@@ -623,9 +623,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         // if (!$this->isTestEnv()) {
         //     $api_url = 'https://api.liqu.id/';
         // } else {
-            // kalau ada testmode berarti pake domainsas
-            $api_url = 'https://api.domainsas.com/';
+        //     // kalau ada testmode berarti pake domainsas
+        //     $api_url = 'https://api.domainsas.com/';
         // }
+
+        $api_url = $this->_getApiUrl();
 
         // tambahan kalo di commerce whmcs di kasih TestJcampBizMode, yang ini pake api liquid
         // if (!empty($params["TestJcampNetMode"])) {
@@ -642,11 +644,12 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        // if (empty(!$this->isTestEnv())) { // kalau ke domainsas di false aja verify nya
-        //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
-        // } else {
+        if (!$this->isTestEnv()) { // kalau ke domainsas di false aja verify nya
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+        } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        // }
+        }
+
         switch ($method) {
             case 'get':
                 curl_setopt($ch, CURLOPT_HTTPGET, 1);
@@ -684,10 +687,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $code        = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         $return = array(
-            // 'header' => http_parse_headers($header),
+            'header' => $header,
             'body'   => json_decode($body, true),
             'code'   => $code,
-            // 'return' => $response,
         );
 
         if(isset($return['body']['message']) && $return['code'] != 200) {
@@ -695,52 +697,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         return $return;
-
-        // $params = $this->includeAuthorizationParams($params);
-        // $opts = array(
-        //     CURLOPT_CONNECTTIMEOUT  => 30,
-        //     CURLOPT_RETURNTRANSFER  => true,
-        //     CURLOPT_TIMEOUT         => 60,
-        //     CURLOPT_URL             => $this->_getApiUrl().$url.'.'.$type,
-        //     CURLOPT_SSL_VERIFYHOST  =>  0,
-        //     CURLOPT_SSL_VERIFYPEER  =>  0,
-        // );
-        // if($method == 'POST') {
-        //     $opts[CURLOPT_POST]         = 1;
-        //     $opts[CURLOPT_POSTFIELDS]   = $this->_formatParams($params);
-        //     $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL].'?'.$opts[CURLOPT_POSTFIELDS]);
-        // } else {
-        //     $opts[CURLOPT_URL]  = $opts[CURLOPT_URL].'?'.$this->_formatParams($params);
-        //     $this->getLog()->debug('API REQUEST: '.$opts[CURLOPT_URL]);
-        // }
-        // $ch = curl_init();
-        // curl_setopt_array($ch, $opts);
-        // $result = curl_exec($ch);
-        // if ($result === false) {
-        //     $e = new Registrar_Exception(sprintf('CurlException: "%s"', curl_error($ch)));
-        //     $this->getLog()->err($e);
-        //     curl_close($ch);
-        //     throw $e;
-        // }
-        // curl_close($ch);
-        // $this->getLog()->info('API RESULT: '.$result);
-        
-        // // response checker
-        // $json = json_decode($result, true);
-        // if(!is_array($json)) {
-        //     return $result;
-        // }
-        // if(isset($json['status']) && $json['status'] == 'ERROR') {
-        //     throw new Registrar_Exception($json['message'], 101);
-        // }
-        // if(isset($json['status']) && $json['status'] == 'error') {
-        //     throw new Registrar_Exception($json['error'], 102);
-        // }
-        
-        // if(isset($json['status']) && $json['status'] == 'Failed') {
-        //     throw new Registrar_Exception($json['actionstatusdesc'], 103);
-        // }
-        // return $json;
     }
     /**
      * Convert params to Liquid format
