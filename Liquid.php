@@ -343,11 +343,14 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         try {
             $result = $this->_makeRequest('/domains', $params, 'post');
         } catch(Registrar_Exception $e) {
-            throw new Registrar_Exception(json_encode(array('error' => $e->getMessage())));
+            if (strpos($e->getMessage(), "is not valid NameServer")) {
+                $params['ns'] = 'ns1.liqu.id,ns2.liqu.id';
+                $result = $this->_makeRequest('/domains', $params, 'post');
+            }
         }
         
         
-        throw new Registrar_Exception(json_encode($params));
+        throw new Registrar_Exception(json_encode($result));
         return ($result['status'] == 'Success');
     }
     public function renewDomain(Registrar_Domain $domain)
