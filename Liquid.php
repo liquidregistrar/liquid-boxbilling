@@ -198,47 +198,66 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     private function _getDomainOrderId(Registrar_Domain $d)
     {
-        $required_params = array(
-            'domain-name'   =>  $d->getName(),
-        );
-        return $this->_makeRequest('domains/orderid', $required_params);
+        // $required_params = array(
+        //     'domain_name'   =>  $d->getName(),
+        // );
+        $domain_name  = str_replace(" ", "", strtolower($d->getName()));
+        $param_search = http_build_query(array(
+            'limit'             => '100',
+            'page_no'           => '1',
+            'domain_name'       => $domain_name,
+            'exact_domain_name' => '1'
+        ));
+
+        $result_search = $this->_makeRequest('/domains?'.$param_search);
+
+        if (!empty($result_search) AND is_array($result_search)) {
+            foreach ($result_search as $res) {
+                if (trim(strtolower($res['domain_name'])) == $domain_name) {
+                    return $res['domain_id'];
+                }
+            }
+        }
+
+        throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
     public function getDomainDetails(Registrar_Domain $d)
     {
-        $orderid = $this->_getDomainOrderId($d);
-        $params = array(
-            'order-id'      =>  $orderid,
-            'options'       =>  'All',
-        );
-        $data = $this->_makeRequest('domains/details', $params);
+        $domain_id = $this->_getDomainOrderId($d);
+        // $params = array(
+        //     'order-id'      =>  $orderid,
+        //     'options'       =>  'All',
+        // );
+        $data = $this->_makeRequest('/domains/'.$domain_id.'?fields=all');
         
-        $d->setRegistrationTime($data['creationtime']);
-        $d->setExpirationTime($data['endtime']);
-        $d->setEpp($data['domsecret']);
-        $d->setPrivacyEnabled(($data['isprivacyprotected'] == 'true'));
+        $d->setRegistrationTime($data['start_date']);
+        $d->setExpirationTime($data['end_date']);
+        $d->setEpp($data['auth_code']);
+        $d->setPrivacyEnabled(($data['privacy_protection_enabled'] == 'true'));
         
         /* Contact details */
-        $wc = $data['admincontact'];
+        $wc = $data['adm_contact'];
         $c = new Registrar_Domain_Contact();
-        $c->setId($wc['contactid'])
+        $c->setId($wc['contact_id'])
             ->setName($wc['name'])
-            ->setEmail($wc['emailaddr'])
+            ->setEmail($wc['email'])
             ->setCompany($wc['company'])
-            ->setTel($wc['telno'])
-            ->setTelCc($wc['telnocc'])
-            ->setAddress1($wc['address1'])
+            ->setTel($wc['tel_no'])
+            ->setTelCc($wc['tel_cc_no'])
+            ->setAddress1($wc['address_line_1'])
             ->setCity($wc['city'])
             ->setCountry($wc['country'])
             ->setState($wc['state'])
-            ->setZip($wc['zip']);
+            ->setZip($wc['zipcode']);
         
-        if(isset($wc['address2'])) {
-            $c->setAddress2($wc['address2']);
+        if(isset($wc['address_line_2'])) {
+            $c->setAddress2($wc['address_line_2']);
         }
-        if(isset($wc['address3'])) {
-            $c->setAddress3($wc['address3']);
+        if(isset($wc['address_line_3'])) {
+            $c->setAddress3($wc['address_line_3']);
         }
         $d->setContactRegistrar($c);
+        
         if(isset($data['ns1'])) {
             $d->setNs1($data['ns1']);
         }
