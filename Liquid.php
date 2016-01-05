@@ -418,8 +418,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
     public function getEpp(Registrar_Domain $domain)
     {
-        $this->getDomainDetails($domain);
-        
         $domain_id = $this->_getDomainOrderId($domain);
         $auth_code = $this->_makeRequest('domains/'.$domain_id.'/auth_code');
 
@@ -427,24 +425,21 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             throw new Registrar_Exception('Domain EPP code can be retrieved from domain registrar');
         }
 
-        $domain->setEpp($auth_code);
         return $auth_code;
     }
     public function lock(Registrar_Domain $domain)
     {
-        $params = array(
-            'order-id'        =>  $this->_getDomainOrderId($domain),
-        );
-        $result = $this->_makeRequest('domains/enable-theft-protection', $params, 'POST');
-        return (strtolower($result['status']) == 'success');
+        $domain_id = $this->_getDomainOrderId($domain);
+
+        $result = $this->_makeRequest('domains/'.$domain_id.'/theft_protection', array(), 'put');
+        return (strtolower($result['theft_protection']) == 'true');
     }
     public function unlock(Registrar_Domain $domain)
     {
-        $params = array(
-            'order-id'        =>  $this->_getDomainOrderId($domain),
-        );
-        $result = $this->_makeRequest('domains/disable-theft-protection', $params, 'POST');
-        return (strtolower($result['status']) == 'success');
+        $domain_id = $this->_getDomainOrderId($domain);
+
+        $result = $this->_makeRequest('domains/'.$domain_id.'/theft_protection', array(), 'delete');
+        return (strtolower($result['theft_protection']) == 'false');
     }
     
     private function _getCustomerDetails(Registrar_Domain $domain, $cust_email)
