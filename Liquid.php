@@ -736,7 +736,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $code        = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if (strpos($header, "404 Not Found")) {
-            throw new Registrar_Exception("Unable to request data from liquid server, URL is not valid");
+            throw new Registrar_Exception("Unable to request data from liquid server, URL is not valid (".$request_url.")");
         }
 
         curl_close($ch);
