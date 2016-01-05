@@ -293,14 +293,13 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $tech_contact_id    = $get_defaultContact['tech_contact']['contact_id'];
         $billing_contact_id = $get_defaultContact['billing_contact']['contact_id'];
 
-        $ns = array();
-        $ns[] = $domain->getNs1();
-        $ns[] = $domain->getNs2();
+        $ns = $domain->getNs1();
+        $ns .= $domain->getNs2();
         if($domain->getNs3())  {
-            $ns[] = $domain->getNs3();
+            $ns .= $domain->getNs3();
         }
         if($domain->getNs4())  {
-            $ns[] = $domain->getNs4();
+            $ns .= $domain->getNs4();
         }
 
         $params = array(
