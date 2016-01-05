@@ -415,15 +415,19 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $result = $this->_makeRequest('domains/modify-privacy-protection', $params, 'POST');
         return (strtolower($result['actionstatus']) == 'success');
     }
-    
+
     public function getEpp(Registrar_Domain $domain)
     {
+        $this->getDomainDetails($domain);
+        
         $domain_id = $this->_getDomainOrderId($domain);
         $auth_code = $this->_makeRequest('domains/'.$domain_id.'/auth_code');
 
         if(empty($auth_code)) {
             throw new Registrar_Exception('Domain EPP code can be retrieved from domain registrar');
         }
+
+        $domain->setEpp($auth_code);
         return $auth_code;
     }
     public function lock(Registrar_Domain $domain)
