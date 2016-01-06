@@ -388,13 +388,14 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             }
         }
         
-        if (!empty($result['domain_id'])) {
-            $result['status'] = 'Success';
-        } else {
-            $result['status'] = 'Failed';
-        }
+        // if (!empty($result['domain_id'])) {
+        //     $result['status'] = 'Success';
+        // } else {
+        //     $result['status'] = 'Failed';
+        // }
 
-        return ($result['status'] == 'Success');
+        // return ($result['status'] == 'Success');
+        return (!empty($result['domain_id']) AND is_array($result));
     }
     public function renewDomain(Registrar_Domain $domain)
     {
