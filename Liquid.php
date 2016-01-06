@@ -97,6 +97,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             '.org.cn', '.nl', '.co', '.com.co', '.pw',
         );
     }
+
     public function isDomainAvailable(Registrar_Domain $domain)
     {
         $result = $this->_makeRequest('domains/availability?domain='.$domain->getName(), array(), 'get');
@@ -110,6 +111,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         return false;
     }
+
     public function isDomainCanBeTransfered(Registrar_Domain $domain)
     {
         $params = array(
@@ -118,6 +120,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $result = $this->_makeRequest('domains/transfer/validity', $params, 'post');
         return ($result == true);
     }
+
     public function modifyNs(Registrar_Domain $domain)
     {
         $ns = array();
@@ -141,34 +144,49 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         return ($result['status'] == 'Success');
     }
+
     public function modifyContact(Registrar_Domain $domain)
     {
-        $customer = $this->_getCustomerDetails($domain);
-        $cdetails = $this->_getDefaultContactDetails($domain, $customer['customerid']);
-        $contact_id = $cdetails['Contact']['registrant'];
+        $cust = $domain->getContactRegistrar();
+        $cust_email = $cust->getEmail();
+
+        // mendapatkan customer di LQ
+        $customer = $this->_getCustomerDetails($domain, $cust_email);
+
+        if (is_array($customer)) {
+            foreach ($customer as $cus) {
+                $cus['email'] = trim(strtolower($cus['email']));
+                if ($cus['email'] == $cust_email) {
+                    $customer_id = $cus['customer_id'];
+                }
+            }
+        }
+
+        $cdetails = $this->_getDefaultContactDetails($customer_id);
+        $contact_id = $cdetails['registrant_contact']['contact_id'];
         $c = $domain->getContactRegistrar();
         
         $required_params = array(
-            'contact-id'        =>  $contact_id,
             'name'              =>  $c->getName(),
             'company'           =>  $c->getCompany(),
             'email'             =>  $c->getEmail(),
-            'address-line-1'    =>  $c->getAddress1(),
+            'address_line_1'    =>  $c->getAddress1(),
             'city'              =>  $c->getCity(),
             'zipcode'           =>  $c->getZip(),
-            'phone-cc'          =>  $c->getTelCc(),
-            'phone'             =>  $c->getTel(),
-            'country'           =>  $c->getCountry(),
+            'tel_cc_no'         =>  $c->getTelCc(),
+            'tel_no'            =>  $c->getTel(),
+            'country_code'      =>  $c->getCountry(),
         );
         $optional_params = array(
-            'address-line-2'    =>  $c->getAddress2(),
-            'address-line-3'    =>  $c->getAddress3(),
+            'address_line_2'    =>  $c->getAddress2(),
+            'address_line_3'    =>  $c->getAddress3(),
             'state'             =>  $c->getState(),
         );
         $params = array_merge($optional_params, $required_params);
-        $result = $this->_makeRequest('contacts/modify', $params, 'POST');
-        return ($result['status'] == 'Success');
+        $result = $this->_makeRequest('customers/' . $customer_id . '/contacts/' . $contact_id, $params, 'put');
+        return (!isset($result['message']) AND is_array($result));
     }
+
     public function transferDomain(Registrar_Domain $domain)
     {
         $customer = $this->_getCustomerDetails($domain);
