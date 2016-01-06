@@ -302,9 +302,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
     public function registerDomain(Registrar_Domain $domain)
     {
-        if($this->_hasCompletedOrder($domain)) {
-            return true;
-        }
+        // if($this->_hasCompletedOrder($domain)) {
+        //     return true;
+        // }
         
         $tld = $domain->getTld();
 
@@ -417,14 +417,13 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             }
         }
         
-        // if (!empty($result['domain_id'])) {
-        //     $result['status'] = 'Success';
-        // } else {
-        //     $result['status'] = 'Failed';
-        // }
+        if (!empty($result['domain_id'])) {
+            $result['status'] = 'Success';
+        } else {
+            $result['status'] = 'Failed';
+        }
 
-        // return ($result['status'] == 'Success');
-        return (!empty($result['domain_id']) AND is_array($result));
+        return ($result['status'] == 'Success');
     }
     public function renewDomain(Registrar_Domain $domain)
     {
