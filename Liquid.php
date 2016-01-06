@@ -404,6 +404,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     public function renewDomain(Registrar_Domain $domain)
     {
         $domain_detail = $this->getDomainDetails($domain);
+        $domain_id = $domain_detail['domain_id'];
         $params = array(
             'years'                       => $domain->getRegistrationPeriod(),
             'current_date'                => $domain_detail['expiry_date'],
