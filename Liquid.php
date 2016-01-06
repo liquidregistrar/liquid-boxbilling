@@ -244,6 +244,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
+    
     public function getDomainDetails(Registrar_Domain $d)
     {
         $domain_id = $this->_getDomainOrderId($d);
@@ -294,7 +295,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $d->setNs4($data['ns4']);
         }
         
-        return $d;
+        return $data;
     }
     public function deleteDomain(Registrar_Domain $domain)
     {
@@ -402,14 +403,16 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     }
     public function renewDomain(Registrar_Domain $domain)
     {
+        $domain_detail = $this->getDomainDetails($domain);
         $params = array(
-            'order-id'          =>  $this->_getDomainOrderId($domain),
-            'years'             =>  $domain->getRegistrationPeriod(),
-            'exp-date'          =>  $domain->getExpirationTime(),
-            'invoice-option'    =>  'NoInvoice',
+            'years'                       => $domain->getRegistrationPeriod(),
+            'current_date'                => $domain_detail['expiry_date'],
+            'purchase_privacy_protection' => 'false',
+            'invoice_option'              => 'no_invoice'
         );
-        $result = $this->_makeRequest('domains/renew', $params, 'POST');
-        return ($result['actionstatus'] == 'Success');
+
+        $result = $this->_makeRequest('domains/'.$domain_id.'/renew', $params, 'post');
+        return (is_array($result) AND isset($result['transaction_id']));
     }
 
     public function enablePrivacyProtection(Registrar_Domain $domain)
@@ -424,7 +427,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     public function disablePrivacyProtection(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
-        
+
         $result = $this->_makeRequest('domains/'.$domain_id.'/privacy_protection', $params, 'delete');
 
         return (strtolower($result['privacy_protection_enabled']) == 'false');
