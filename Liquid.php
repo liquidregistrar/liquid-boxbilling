@@ -165,8 +165,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $cdetails = $this->_getDefaultContactDetails($customer_id);
         $contact_id = $cdetails['registrant_contact']['contact_id'];
         $c = $domain->getContactRegistrar();
-
-        throw new Registrar_Exception(json_encode($c));
         
         $required_params = array(
             'name'              =>  $c->getName(),
@@ -413,27 +411,23 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $result = $this->_makeRequest('domains/renew', $params, 'POST');
         return ($result['actionstatus'] == 'Success');
     }
+
     public function enablePrivacyProtection(Registrar_Domain $domain)
     {
-        $order_id = $this->_getDomainOrderId($domain);
-        $params = array(
-            'order-id'        =>  $order_id,
-            'protect-privacy' =>  true,
-            'reason'          =>  'Owners decision',
-        );
-        $result = $this->_makeRequest('domains/modify-privacy-protection', $params, 'POST');
-        return (strtolower($result['actionstatus']) == 'success');
+        $domain_id = $this->_getDomainOrderId($domain);
+
+        $result = $this->_makeRequest('domains/'.$domain_id.'/privacy_protection', $params, 'put');
+
+        return (strtolower($result['privacy_protection_enabled']) == 'true');
     }
+
     public function disablePrivacyProtection(Registrar_Domain $domain)
     {
-        $order_id = $this->_getDomainOrderId($domain);
-        $params = array(
-            'order-id'        =>  $order_id,
-            'protect-privacy' =>  false,
-            'reason'          =>  'Owners decision',
-        );
-        $result = $this->_makeRequest('domains/modify-privacy-protection', $params, 'POST');
-        return (strtolower($result['actionstatus']) == 'success');
+        $domain_id = $this->_getDomainOrderId($domain);
+        
+        $result = $this->_makeRequest('domains/'.$domain_id.'/privacy_protection', $params, 'delete');
+
+        return (strtolower($result['privacy_protection_enabled']) == 'false');
     }
 
     public function getEpp(Registrar_Domain $domain)
