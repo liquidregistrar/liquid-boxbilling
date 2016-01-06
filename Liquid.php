@@ -323,7 +323,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             }
         }
 
-        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
         $get_defaultContact = $this->_getDefaultContactDetails($customer_id);
 
         $reg_contact_id     = $get_defaultContact['registrant_contact']['contact_id'];
@@ -342,6 +341,34 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         $ns = implode(',', $ns_);
+
+        // cek default ns customer LQ
+        $def_ns = _makeRequest('customers/'. $customer_id .'/ns/default');
+        $lq_defaultns = array();
+
+        if (!empty($def_ns["body"]["ns1"])) { // ambil defaultnya ns1
+            $lq_defaultns[] = $def_ns["body"]["ns1"];
+        }
+        if (!empty($def_ns["body"]["ns2"])) { // ambil defaultnya ns2
+            $lq_defaultns[] = $def_ns["body"]["ns2"];
+        }
+        if (!empty($def_ns["body"]["ns3"])) { // ambil defaultnya ns3
+            $lq_defaultns[] = $def_ns["body"]["ns3"];
+        }
+        if (!empty($def_ns["body"]["ns4"])) { // ambil defaultnya ns4
+            $lq_defaultns[] = $def_ns["body"]["ns4"];
+        }
+
+        // simpan sementara
+        $default_ns = implode(",", $lq_defaultns);
+        if ($this->isTestEnv()) { // khusus testmode di bikin spt berikut
+            $default_ns = 'ns1.liqu.id,ns2.liqu.id';
+        }
+
+        // cek kalau ns nya kosong ambil dari default nya customer
+        if (empty($ns)) {
+            $ns = $default_ns;
+        }
 
         $params = array(
             'domain_name'       =>  $domain->getName(),
@@ -381,20 +408,15 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         try {
             $result = $this->_makeRequest('domains', $params, 'post');
         } catch(Registrar_Exception $e) {
-            // jika gagal karena NS, set ns ke liqu.id
+            // jika gagal karena NS, set ns ke $default_ns
+            // kemudian di register lagi domainnya
             if (strpos($e->getMessage(), "is not valid NameServer")) {
-                $params['ns'] = 'ns1.liqu.id,ns2.liqu.id';
+                $params['ns'] = $default_ns;
                 $result = $this->_makeRequest('domains', $params, 'post');
             }
         }
-        
-        if (!empty($result['domain_id'])) {
-            $result['status'] = 'Success';
-        } else {
-            $result['status'] = 'Failed';
-        }
 
-        return ($result['status'] == 'Success');
+        return (!empty($result['domain_id']) AND is_array($result));
     }
     public function renewDomain(Registrar_Domain $domain)
     {
