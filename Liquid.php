@@ -219,11 +219,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
         return $this->_makeRequest('domains/transfer', $required_params, 'POST');
     }
+    
     private function _getDomainOrderId(Registrar_Domain $d)
     {
-        // $required_params = array(
-        //     'domain_name'   =>  $d->getName(),
-        // );
         $domain_name  = str_replace(" ", "", strtolower($d->getName()));
         $param_search = http_build_query(array(
             'limit'             => '100',
@@ -248,10 +246,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     public function getDomainDetails(Registrar_Domain $d)
     {
         $domain_id = $this->_getDomainOrderId($d);
-        // $params = array(
-        //     'order-id'      =>  $orderid,
-        //     'options'       =>  'All',
-        // );
         $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
         $d->setRegistrationTime($data['start_date']);
@@ -297,14 +291,15 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         
         return $data;
     }
+
     public function deleteDomain(Registrar_Domain $domain)
     {
-        $required_params = array(
-            'order-id'  =>  $this->_getDomainOrderId($domain),
-        );
-        $result = $this->_makeRequest('domains/delete', $required_params, 'POST');
-        return (strtolower($result['status']) == 'success');
+        $domain_id = $this->_getDomainOrderId($domain),
+
+        $result = $this->_makeRequest('domains/'.$domain_id, array(), 'delete');
+        return ($result['deleted'] == true);
     }
+
     public function registerDomain(Registrar_Domain $domain)
     {
         if($this->_hasCompletedOrder($domain)) {
@@ -619,15 +614,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return $result;
     }
 
-    // private function _getDefaultContactDetails(Registrar_Domain $domain, $customer_id)
     private function _getDefaultContactDetails($customer_id)
     {
-        // $params = array(
-        //     'customer-id'   =>  $customer_id,
-        //     'type'          =>  'Contact',
-        // );
         return $this->_makeRequest('customers/'.$customer_id.'/contacts/default');
     }
+
     private function removeCustomer($params)
     {
         $required_params = array(
@@ -641,12 +632,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     private function _hasCompletedOrder(Registrar_Domain $domain)
     {
         try {
-            $orderid = $this->_getDomainOrderId($domain);
-            $params = array(
-                'order-id'      =>  $orderid,
-                'options'       =>  'All',
-            );
-            $data = $this->_makeRequest('domains/details', $params);
+            $domain_id = $this->_getDomainOrderId($d);
+            $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         } catch(Exception $e) {
             return false;
         }
