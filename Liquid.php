@@ -165,6 +165,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $cdetails = $this->_getDefaultContactDetails($customer_id);
         $contact_id = $cdetails['registrant_contact']['contact_id'];
         $c = $domain->getContactRegistrar();
+
+        throw new Registrar_Exception(json_encode($c));
         
         $required_params = array(
             'name'              =>  $c->getName(),
@@ -175,7 +177,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             'zipcode'           =>  $c->getZip(),
             'tel_cc_no'         =>  $c->getTelCc(),
             'tel_no'            =>  $c->getTel(),
-            'country_code'      =>  $c->getCountry(),
+            'country_code'      =>  $cdetails['registrant_contact']['country_code'],
         );
         $optional_params = array(
             'address_line_2'    =>  $c->getAddress2(),
