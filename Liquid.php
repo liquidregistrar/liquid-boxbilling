@@ -219,7 +219,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
         return $this->_makeRequest('domains/transfer', $required_params, 'POST');
     }
-    
+
     private function _getDomainOrderId(Registrar_Domain $d)
     {
         $domain_name  = str_replace(" ", "", strtolower($d->getName()));
@@ -294,7 +294,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
     public function deleteDomain(Registrar_Domain $domain)
     {
-        $domain_id = $this->_getDomainOrderId($domain),
+        $domain_id = $this->_getDomainOrderId($domain);
 
         $result = $this->_makeRequest('domains/'.$domain_id, array(), 'delete');
         return ($result['deleted'] == true);
