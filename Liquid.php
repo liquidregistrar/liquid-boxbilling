@@ -245,7 +245,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
     public function getDomainDetails(Registrar_Domain $d)
     {
-        $orderid = $this->_getDomainOrderId($d);
+        /*$orderid = $this->_getDomainOrderId($d);
         $params = array(
             'order-id'      =>  $orderid,
             'options'       =>  'All',
@@ -292,9 +292,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $d->setNs4($data['ns4']);
         }
         
-        return $d;
+        return $d;*/
 
-        /*$domain_id = $this->_getDomainOrderId($d);
+        $domain_id = $this->_getDomainOrderId($d);
         $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
         $d->setRegistrationTime(strtotime($data['creation_date']));
@@ -302,7 +302,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $d->setEpp($data['auth_code']);
         $d->setPrivacyEnabled(($data['privacy_protection_enabled'] == 'true'));
         
-        /* Contact details *
+        /* Contact details */
         $wc = $data['adm_contact'];
         $c = new Registrar_Domain_Contact();
         $c->setId($wc['contact_id'])
@@ -338,7 +338,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $d->setNs4($data['ns4']);
         }
         
-        return $data;*/
+        return $d;
     }
 
     public function deleteDomain(Registrar_Domain $domain)
