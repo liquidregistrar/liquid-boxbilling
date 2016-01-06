@@ -242,7 +242,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
-    
+
     public function getDomainDetails(Registrar_Domain $d)
     {
         $domain_id = $this->_getDomainOrderId($d);
@@ -323,7 +323,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             }
         }
 
-        // list($reg_contact_id, $admin_contact_id, $tech_contact_id, $billing_contact_id) = $this->_getAllContacts($tld, $customer_id, $domain->getContactRegistrar());
         $get_defaultContact = $this->_getDefaultContactDetails($customer_id);
 
         $reg_contact_id     = $get_defaultContact['registrant_contact']['contact_id'];
@@ -342,6 +341,34 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         }
 
         $ns = implode(',', $ns_);
+
+        // // cek default ns customer LQ
+        // $def_ns = $this->_makeRequest('customers/'.$customer_id.'/ns/default');
+        // $lq_defaultns = array();
+
+        // if (!empty($def_ns["body"]["ns1"])) { // ambil defaultnya ns1
+        //     $lq_defaultns[] = $def_ns["body"]["ns1"];
+        // }
+        // if (!empty($def_ns["body"]["ns2"])) { // ambil defaultnya ns2
+        //     $lq_defaultns[] = $def_ns["body"]["ns2"];
+        // }
+        // if (!empty($def_ns["body"]["ns3"])) { // ambil defaultnya ns3
+        //     $lq_defaultns[] = $def_ns["body"]["ns3"];
+        // }
+        // if (!empty($def_ns["body"]["ns4"])) { // ambil defaultnya ns4
+        //     $lq_defaultns[] = $def_ns["body"]["ns4"];
+        // }
+
+        // // simpan sementara
+        // $default_ns = implode(",", $lq_defaultns);
+        // if ($this->isTestEnv()) { // khusus testmode di bikin spt berikut
+        //     $default_ns = 'ns1.liqu.id,ns2.liqu.id';
+        // }
+
+        // // cek kalau ns nya kosong ambil dari default nya customer
+        // if (empty($ns)) {
+        //     $ns = $default_ns;
+        // }
 
         $params = array(
             'domain_name'       =>  $domain->getName(),
@@ -381,9 +408,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         try {
             $result = $this->_makeRequest('domains', $params, 'post');
         } catch(Registrar_Exception $e) {
-            // jika gagal karena NS, set ns ke liqu.id
+            // jika gagal karena NS, set ns ke $default_ns
+            // kemudian di register lagi domainnya
             if (strpos($e->getMessage(), "is not valid NameServer")) {
                 $params['ns'] = 'ns1.liqu.id,ns2.liqu.id';
+                // $params['ns'] = $default_ns;
                 $result = $this->_makeRequest('domains', $params, 'post');
             }
         }
@@ -632,14 +661,31 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     
     private function _hasCompletedOrder(Registrar_Domain $domain)
     {
-        try {
-            $domain_id = $this->_getDomainOrderId($d);
-            $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
-        } catch(Exception $e) {
-            return false;
+        $domain_name  = str_replace(" ", "", strtolower($domain->getName()));
+        $param_search = http_build_query(array(
+            'limit'             => '100',
+            'page_no'           => '1',
+            'domain_name'       => $domain_name,
+            'exact_domain_name' => '1'
+        ));
+
+        $result_search = $this->_makeRequest('domains?'.$param_search);
+
+        if (!empty($result_search) AND is_array($result_search)) {
+            foreach ($result_search as $res) {
+                if (trim(strtolower($res['domain_name'])) == $domain_name) {
+                    $domain_id = $res['domain_id'];
+                    try {
+                        $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
+                        return (strtolower($data['order_status']) == 'live');
+                    } catch(Exception $e) {
+                        return false;
+                    }
+                }
+            }
         }
-        
-        return ($data['currentstatus'] == 'Active');
+
+        return false;
     }
     
     public function isTestEnv()
