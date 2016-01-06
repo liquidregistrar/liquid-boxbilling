@@ -245,15 +245,64 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
     public function getDomainDetails(Registrar_Domain $d)
     {
-        $domain_id = $this->_getDomainOrderId($d);
+        $orderid = $this->_getDomainOrderId($d);
+        $params = array(
+            'order-id'      =>  $orderid,
+            'options'       =>  'All',
+        );
+        $data = $this->_makeRequest('domains/details', $params);
+        
+        $d->setRegistrationTime($data['creationtime']);
+        $d->setExpirationTime($data['endtime']);
+        $d->setEpp($data['domsecret']);
+        $d->setPrivacyEnabled(($data['isprivacyprotected'] == 'true'));
+        
+        /* Contact details */
+        $wc = $data['admincontact'];
+        $c = new Registrar_Domain_Contact();
+        $c->setId($wc['contactid'])
+            ->setName($wc['name'])
+            ->setEmail($wc['emailaddr'])
+            ->setCompany($wc['company'])
+            ->setTel($wc['telno'])
+            ->setTelCc($wc['telnocc'])
+            ->setAddress1($wc['address1'])
+            ->setCity($wc['city'])
+            ->setCountry($wc['country'])
+            ->setState($wc['state'])
+            ->setZip($wc['zip']);
+        
+        if(isset($wc['address2'])) {
+            $c->setAddress2($wc['address2']);
+        }
+        if(isset($wc['address3'])) {
+            $c->setAddress3($wc['address3']);
+        }
+        $d->setContactRegistrar($c);
+        if(isset($data['ns1'])) {
+            $d->setNs1($data['ns1']);
+        }
+        if(isset($data['ns2'])) {
+            $d->setNs2($data['ns2']);
+        }
+        if(isset($data['ns3'])) {
+            $d->setNs3($data['ns3']);
+        }
+        if(isset($data['ns4'])) {
+            $d->setNs4($data['ns4']);
+        }
+        
+        return $d;
+
+        /*$domain_id = $this->_getDomainOrderId($d);
         $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
-        $d->setRegistrationTime(strtotime($data['start_date']));
+        $d->setRegistrationTime(strtotime($data['creation_date']));
         $d->setExpirationTime(strtotime($data['end_date']));
         $d->setEpp($data['auth_code']);
         $d->setPrivacyEnabled(($data['privacy_protection_enabled'] == 'true'));
         
-        /* Contact details */
+        /* Contact details *
         $wc = $data['adm_contact'];
         $c = new Registrar_Domain_Contact();
         $c->setId($wc['contact_id'])
@@ -264,7 +313,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             ->setTelCc($wc['tel_cc_no'])
             ->setAddress1($wc['address_line_1'])
             ->setCity($wc['city'])
-            ->setCountry($wc['country'])
+            ->setCountry($wc['country_code'])
             ->setState($wc['state'])
             ->setZip($wc['zipcode']);
         
@@ -289,7 +338,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             $d->setNs4($data['ns4']);
         }
         
-        return $data;
+        return $data;*/
     }
 
     public function deleteDomain(Registrar_Domain $domain)
