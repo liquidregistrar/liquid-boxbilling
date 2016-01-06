@@ -343,7 +343,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $ns = implode(',', $ns_);
 
         // cek default ns customer LQ
-        $def_ns = _makeRequest('customers/'. $customer_id .'/ns/default');
+        $def_ns = $this->_makeRequest('customers/'.$customer_id.'/ns/default');
         $lq_defaultns = array();
 
         if (!empty($def_ns["body"]["ns1"])) { // ambil defaultnya ns1
