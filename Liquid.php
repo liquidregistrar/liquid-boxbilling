@@ -248,8 +248,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $domain_id = $this->_getDomainOrderId($d);
         $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
-        $d->setRegistrationTime($data['start_date']);
-        $d->setExpirationTime($data['end_date']);
+        $d->setRegistrationTime(strtotime($data['start_date']));
+        $d->setExpirationTime(strtotime($data['end_date']));
         $d->setEpp($data['auth_code']);
         $d->setPrivacyEnabled(($data['privacy_protection_enabled'] == 'true'));
         
