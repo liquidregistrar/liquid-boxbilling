@@ -242,7 +242,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
-    
+
     public function getDomainDetails(Registrar_Domain $d)
     {
         $domain_id = $this->_getDomainOrderId($d);
@@ -653,14 +653,31 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     
     private function _hasCompletedOrder(Registrar_Domain $domain)
     {
-        try {
-            $domain_id = $this->_getDomainOrderId($d);
-            $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
-        } catch(Exception $e) {
-            return false;
+        $domain_name  = str_replace(" ", "", strtolower($domain->getName()));
+        $param_search = http_build_query(array(
+            'limit'             => '100',
+            'page_no'           => '1',
+            'domain_name'       => $domain_name,
+            'exact_domain_name' => '1'
+        ));
+
+        $result_search = $this->_makeRequest('domains?'.$param_search);
+
+        if (!empty($result_search) AND is_array($result_search)) {
+            foreach ($result_search as $res) {
+                if (trim(strtolower($res['domain_name'])) == $domain_name) {
+                    $domain_id = $res['domain_id'];
+                    try {
+                        $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
+                        return (strtolower($data['order_status']) == 'live');
+                    } catch(Exception $e) {
+                        return false;
+                    }
+                }
+            }
         }
-        
-        return ($data['currentstatus'] == 'Active');
+
+        return false;
     }
     
     public function isTestEnv()
