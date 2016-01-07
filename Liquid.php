@@ -21,11 +21,16 @@
  */
 class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 {
+    /**
+     * config
+     * @return boolean
+     */
     public $config = array(
         'userid'   => null,
         'password' => null,
         'api-key' => null,
     );
+
     public function isKeyValueNotEmpty($array, $key)
     {
         $value = isset ($array[$key]) ? $array[$key] : '';
@@ -204,37 +209,108 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return (!isset($result['message']) AND is_array($result));
     }
 
+    /**
+     * transfer domain
+     * @return boolean
+     */
     public function transferDomain(Registrar_Domain $domain)
     {
-        $customer = $this->_getCustomerDetails($domain);
-        $contacts = $this->_getDefaultContactDetails($domain, $customer['customerid']);
-        $contact_id = $contacts['Contact']['registrant'];
-        $ns = array();
-        $ns[] = $domain->getNs1();
-        $ns[] = $domain->getNs2();
+        $cust = $domain->getContactRegistrar();
+        $cust_email = $cust->getEmail();
+        $customer = $this->_getCustomerDetails($domain, $cust_email);
+
+        if (is_array($customer)) {
+            foreach ($customer as $cus) {
+                $cus['email'] = trim(strtolower($cus['email']));
+                if ($cus['email'] == $cust_email) {
+                    $customer_id = $cus['customer_id'];
+                }
+            }
+        }
+
+        $get_defaultContact = $this->_getDefaultContactDetails($customer_id);
+
+        $reg_contact_id     = $get_defaultContact['registrant_contact']['contact_id'];
+        $admin_contact_id   = $get_defaultContact['admin_contact']['contact_id'];
+        $tech_contact_id    = $get_defaultContact['tech_contact']['contact_id'];
+        $billing_contact_id = $get_defaultContact['billing_contact']['contact_id'];
+
+        $ns_ = array();
+        $ns_[] = $domain->getNs1();
+        $ns_[] = $domain->getNs2();
         if($domain->getNs3())  {
-            $ns[] = $domain->getNs3();
+            $ns_[] = $domain->getNs3();
         }
         if($domain->getNs4())  {
-            $ns[] = $domain->getNs4();
+            $ns_[] = $domain->getNs4();
         }
+
+        $ns = implode(',', $ns_);
+
+        // cek default ns customer LQ
+        $def_ns = $this->_makeRequest('customers/'.$customer_id.'/ns/default');
+        $lq_defaultns = array();
+
+        if (!empty($def_ns["body"]["ns1"])) { // ambil defaultnya ns1
+            $lq_defaultns[] = $def_ns["body"]["ns1"];
+        }
+        if (!empty($def_ns["body"]["ns2"])) { // ambil defaultnya ns2
+            $lq_defaultns[] = $def_ns["body"]["ns2"];
+        }
+        if (!empty($def_ns["body"]["ns3"])) { // ambil defaultnya ns3
+            $lq_defaultns[] = $def_ns["body"]["ns3"];
+        }
+        if (!empty($def_ns["body"]["ns4"])) { // ambil defaultnya ns4
+            $lq_defaultns[] = $def_ns["body"]["ns4"];
+        }
+
+        // simpan sementara
+        $default_ns = implode(",", $lq_defaultns);
+        if ($this->isTestEnv()) { // khusus testmode di bikin spt berikut
+            $default_ns = 'ns1.liqu.id,ns2.liqu.id';
+        }
+
+        // cek kalau ns nya kosong ambil dari default nya customer
+        if (empty($ns)) {
+            $ns = $default_ns;
+        }
+
         $required_params = array(
-            'domain-name'       =>  $domain->getName(),
-            'auth-code'         =>  $domain->getEpp(),
-            'ns'                =>  $ns,
-            'customer-id'       =>  $customer['customerid'],
-            'reg-contact-id'    =>  $contact_id,
-            'admin-contact-id'  =>  $contact_id,
-            'tech-contact-id'   =>  $contact_id,
-            'billing-contact-id'=>  $contact_id,
-            'invoice-option'    =>  'NoInvoice',
-            'protect-privacy'   =>  false,
+            'domain_name'           =>  $domain->getName(),
+            'auth_code'             =>  $domain->getEpp(),
+            'ns'                    =>  $ns,
+            'customer_id'           =>  $customer_id,
+            'registrant_contact_id' =>  $reg_contact_id,
+            'admin_contact_id'      =>  $admin_contact_id,
+            'tech_contact_id'       =>  $tech_contact_id,
+            'billing_contact_id'    =>  $billing_contact_id,
+            'years'                 =>  $domain->getRegistrationPeriod(),
+            'invoice_option'        =>  'no_invoice',
+            'protect_privacy'       =>  false,
         );
-        if($domain->getTld() == '.asia') {
-            $required_params['attr-name1'] = 'cedcontactid';
-            $required_params['attr-value1'] = "default";
+        // if($domain->getTld() == '.asia') {
+        //     $required_params['attr-name1'] = 'cedcontactid';
+        //     $required_params['attr-value1'] = "default";
+        // }
+
+        try {
+            $result = $this->_makeRequest('domains/transfer', $required_params, 'post');
+        } catch(Registrar_Exception $e) {
+            // jika gagal karena NS, set ns ke $default_ns
+            // kemudian di register lagi domainnya
+            if (strpos($e->getMessage(), "is not valid NameServer")) {
+                $required_params['ns'] = $default_ns;
+                $result = $this->_makeRequest('domains/transfer', $required_params, 'post');
+            }
         }
-        return $this->_makeRequest('domains/transfer', $required_params, 'POST');
+
+        if (!empty($result['domain_id'])) {
+            $result['status'] = 'Success';
+        } else {
+            $result['status'] = 'Failed';
+        }
+
+        return ($result['status'] == 'Success');
     }
 
     /**
@@ -719,6 +795,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return $result;
     }
 
+    /**
+     * Cek default contact
+     * @return boolean
+     */
     private function _getDefaultContactDetails($customer_id)
     {
         return $this->_makeRequest('customers/'.$customer_id.'/contacts/default');
@@ -734,6 +814,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return ($result == 'true');
     }
     
+    /**
+     * Cek domain sudah jadi belum
+     * @return boolean
+     */
     private function _hasCompletedOrder(Registrar_Domain $domain)
     {
         $domain_name  = str_replace(" ", "", strtolower($domain->getName()));
