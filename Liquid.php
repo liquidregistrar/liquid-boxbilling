@@ -81,23 +81,28 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
     {
         return array(
             '.com', '.net', '.biz', '.org', '.info', '.name', '.co',
-            '.asia', '.ru', '.com.ru', '.net.ru', '.org.ru',
-            '.de', '.es', '.us', '.xxx', '.ca', '.au', '.com.au',
-            '.net.au', '.co.uk', '.org.uk', '.me.uk',
-            '.eu', '.in', '.co.in', '.net.in', '.org.in',
-            '.gen.in', '.firm.in', '.ind.in', '.cn.com',
-            '.com.co', '.net.co', '.nom.co', '.me', '.mobi',
-            '.tel', '.tv', '.cc', '.ws', '.bz', '.mn', '.co.nz',
-            '.net.nz', '.org.nz', '.eu.com', '.gb.com', '.ae.org',
-            '.kr.com', '.us.com', '.qc.com', '.gr.com',
-            '.de.com', '.gb.net', '.no.com', '.hu.com',
-            '.jpn.com', '.uy.com', '.za.com', '.br.com',
-            '.sa.com', '.se.com', '.se.net', '.uk.com',
-            '.uk.net', '.ru.com', '.com.cn', '.net.cn',
-            '.org.cn', '.nl', '.co', '.com.co', '.pw',
+            '.asia', '.tv', '.in', '.us',
+            // '.ru', '.com.ru', '.net.ru', '.org.ru',
+            // '.de', '.es', '.xxx', '.ca', '.au', '.com.au',
+            // '.net.au', '.co.uk', '.org.uk', '.me.uk',
+            // '.eu', '.co.in', '.net.in', '.org.in',
+            // '.gen.in', '.firm.in', '.ind.in', '.cn.com',
+            // '.com.co', '.net.co', '.nom.co', '.me', '.mobi',
+            // '.tel', '.cc', '.ws', '.bz', '.mn', '.co.nz',
+            // '.net.nz', '.org.nz', '.eu.com', '.gb.com', '.ae.org',
+            // '.kr.com', '.us.com', '.qc.com', '.gr.com',
+            // '.de.com', '.gb.net', '.no.com', '.hu.com',
+            // '.jpn.com', '.uy.com', '.za.com', '.br.com',
+            // '.sa.com', '.se.com', '.se.net', '.uk.com',
+            // '.uk.net', '.ru.com', '.com.cn', '.net.cn',
+            // '.org.cn', '.nl', '.com.co', '.pw',
         );
     }
 
+    /**
+     * Cek availability domain
+     * @return boolean
+     */
     public function isDomainAvailable(Registrar_Domain $domain)
     {
         $result = $this->_makeRequest('domains/availability?domain='.$domain->getName(), array(), 'get');
@@ -112,6 +117,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return false;
     }
 
+    /**
+     * Cek transfer domain
+     * @return boolean
+     */
     public function isDomainCanBeTransfered(Registrar_Domain $domain)
     {
         $params = array(
@@ -121,6 +130,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return ($result == true);
     }
 
+    /**
+     * Ubah NS domain
+     * @return boolean
+     */
     public function modifyNs(Registrar_Domain $domain)
     {
         $ns = array();
@@ -145,6 +158,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return ($result['status'] == 'Success');
     }
 
+    /**
+     * Ubah kontak domain
+     * @return boolean
+     */
     public function modifyContact(Registrar_Domain $domain)
     {
         $cust = $domain->getContactRegistrar();
@@ -220,6 +237,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return $this->_makeRequest('domains/transfer', $required_params, 'POST');
     }
 
+    /**
+     * Cari domain_id
+     * @return boolean
+     */
     private function _getDomainOrderId(Registrar_Domain $d)
     {
         $domain_name  = str_replace(" ", "", strtolower($d->getName()));
@@ -243,6 +264,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
 
+    /**
+     * Cek detail domain dan simpan
+     * @return boolean
+     */
     public function getDomainDetails(Registrar_Domain $d)
     {
         $domain_id = $this->_getDomainOrderId($d);
@@ -292,6 +317,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return $d;
     }
 
+    /**
+     * Hapus domain
+     * @return boolean
+     */
     public function deleteDomain(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
@@ -300,11 +329,15 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return ($result['deleted'] == true);
     }
 
+    /**
+     * Register domain
+     * @return boolean
+     */
     public function registerDomain(Registrar_Domain $domain)
     {
-        // if($this->_hasCompletedOrder($domain)) {
-        //     return true;
-        // }
+        if($this->_hasCompletedOrder($domain)) {
+            return true;
+        }
         
         $tld = $domain->getTld();
 
@@ -342,33 +375,33 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         $ns = implode(',', $ns_);
 
-        // // cek default ns customer LQ
-        // $def_ns = $this->_makeRequest('customers/'.$customer_id.'/ns/default');
-        // $lq_defaultns = array();
+        // cek default ns customer LQ
+        $def_ns = $this->_makeRequest('customers/'.$customer_id.'/ns/default');
+        $lq_defaultns = array();
 
-        // if (!empty($def_ns["body"]["ns1"])) { // ambil defaultnya ns1
-        //     $lq_defaultns[] = $def_ns["body"]["ns1"];
-        // }
-        // if (!empty($def_ns["body"]["ns2"])) { // ambil defaultnya ns2
-        //     $lq_defaultns[] = $def_ns["body"]["ns2"];
-        // }
-        // if (!empty($def_ns["body"]["ns3"])) { // ambil defaultnya ns3
-        //     $lq_defaultns[] = $def_ns["body"]["ns3"];
-        // }
-        // if (!empty($def_ns["body"]["ns4"])) { // ambil defaultnya ns4
-        //     $lq_defaultns[] = $def_ns["body"]["ns4"];
-        // }
+        if (!empty($def_ns["body"]["ns1"])) { // ambil defaultnya ns1
+            $lq_defaultns[] = $def_ns["body"]["ns1"];
+        }
+        if (!empty($def_ns["body"]["ns2"])) { // ambil defaultnya ns2
+            $lq_defaultns[] = $def_ns["body"]["ns2"];
+        }
+        if (!empty($def_ns["body"]["ns3"])) { // ambil defaultnya ns3
+            $lq_defaultns[] = $def_ns["body"]["ns3"];
+        }
+        if (!empty($def_ns["body"]["ns4"])) { // ambil defaultnya ns4
+            $lq_defaultns[] = $def_ns["body"]["ns4"];
+        }
 
-        // // simpan sementara
-        // $default_ns = implode(",", $lq_defaultns);
-        // if ($this->isTestEnv()) { // khusus testmode di bikin spt berikut
-        //     $default_ns = 'ns1.liqu.id,ns2.liqu.id';
-        // }
+        // simpan sementara
+        $default_ns = implode(",", $lq_defaultns);
+        if ($this->isTestEnv()) { // khusus testmode di bikin spt berikut
+            $default_ns = 'ns1.liqu.id,ns2.liqu.id';
+        }
 
-        // // cek kalau ns nya kosong ambil dari default nya customer
-        // if (empty($ns)) {
-        //     $ns = $default_ns;
-        // }
+        // cek kalau ns nya kosong ambil dari default nya customer
+        if (empty($ns)) {
+            $ns = $default_ns;
+        }
 
         $params = array(
             'domain_name'       =>  $domain->getName(),
@@ -411,12 +444,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             // jika gagal karena NS, set ns ke $default_ns
             // kemudian di register lagi domainnya
             if (strpos($e->getMessage(), "is not valid NameServer")) {
-                $params['ns'] = 'ns1.liqu.id,ns2.liqu.id';
-                // $params['ns'] = $default_ns;
+                $params['ns'] = $default_ns;
                 $result = $this->_makeRequest('domains', $params, 'post');
             }
         }
-        
+
         if (!empty($result['domain_id'])) {
             $result['status'] = 'Success';
         } else {
@@ -425,13 +457,17 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         return ($result['status'] == 'Success');
     }
+
+    /**
+     * Renew domain
+     * @return boolean
+     */
     public function renewDomain(Registrar_Domain $domain)
     {
-        $domain_detail = $this->getDomainDetails($domain);
-        $domain_id = $domain_detail['domain_id'];
+        $domain_id = $this->_getDomainOrderId($domain);
         $params = array(
             'years'                       => $domain->getRegistrationPeriod(),
-            'current_date'                => $domain_detail['expiry_date'],
+            'current_date'                => date('Y-m-d H:i:s', $domain->getExpirationTime()),
             'purchase_privacy_protection' => 'false',
             'invoice_option'              => 'no_invoice'
         );
@@ -440,6 +476,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return (is_array($result) AND isset($result['transaction_id']));
     }
 
+    /**
+     * Enable PP domain
+     * @return boolean
+     */
     public function enablePrivacyProtection(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
@@ -449,6 +489,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return (strtolower($result['privacy_protection_enabled']) == 'true');
     }
 
+    /**
+     * Disable PP domain
+     * @return boolean
+     */
     public function disablePrivacyProtection(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
@@ -458,6 +502,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return (strtolower($result['privacy_protection_enabled']) == 'false');
     }
 
+    /**
+     * EPP domain
+     * @return boolean
+     */
     public function getEpp(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
@@ -469,6 +517,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         return $auth_code;
     }
+
+    /**
+     * Lock Theft Protection domain
+     * @return boolean
+     */
     public function lock(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
@@ -476,6 +529,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $result = $this->_makeRequest('domains/'.$domain_id.'/theft_protection', array(), 'put');
         return (strtolower($result['theft_protection']) == 'true');
     }
+
+    /**
+     * Unlock Theft Protection domain
+     * @return boolean
+     */
     public function unlock(Registrar_Domain $domain)
     {
         $domain_id = $this->_getDomainOrderId($domain);
@@ -687,6 +745,10 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         return false;
     }
     
+    /**
+     * Cek TestMode
+     * @return boolean
+     */
     public function isTestEnv()
     {
         return $this->_testMode;
@@ -751,6 +813,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
 
         switch ($method) {
@@ -807,6 +870,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         # langsung return body nya saja
         return $return['body'];
     }
+
     /**
      * Convert params to Liquid format
      * @see http://manage.Liquid.com/kb/answer/755
@@ -824,6 +888,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $params = preg_replace('~%5B(\d+)%5D~', '', $params);
         return $params;
     }
+    
     /**
      * Check if all required params are present, if not add default values
      * @param array $required_params - list of required params with default values
