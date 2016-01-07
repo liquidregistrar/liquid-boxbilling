@@ -541,21 +541,43 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $result = $this->_makeRequest('domains/'.$domain_id.'/theft_protection', array(), 'delete');
         return (strtolower($result['theft_protection']) == 'false');
     }
-    
+
+    /**
+     * Cek customer_id
+     * @return boolean
+     */
     private function _getCustomerDetails(Registrar_Domain $domain, $cust_email)
     {
-        try {
-            $result = $this->_makeRequest('customers?limit=100&page_no=1&status=Active&email='.$cust_email);
-        } catch(Registrar_Exception $e) {
-            $this->_createCustomer($domain);
-            $result = $this->_makeRequest('customers?limit=100&page_no=1&status=Active&email='.$cust_email);
+        $param_search = http_build_query(array(
+            'limit'     => 100,
+            'page_no'   => 1,
+            'status'    => 'Active',
+            'email'     => $cust_email
+        ));
+
+        $result = $this->_makeRequest('customers?'.$param_search);
+
+        // jika customer tidak ditemukan, buat customer baru
+        if(empty($result)) {
+            try {
+                $result = $this->_createCustomer($domain);
+            } catch(Registrar_Exception $e) {
+                $result = $this->_makeRequest('customers?'.$param_search);
+            }
         }
+
         return $result;
     }
+
+    /**
+     * Buat customer baru
+     * @return boolean
+     */
     private function _createCustomer(Registrar_Domain $domain)
     {
         $c = $domain->getContactRegistrar();
         $company = $c->getCompany();
+
         if (!isset($company) || strlen(trim($company)) == 0 ){
             $company = 'N/A';
         }
@@ -563,36 +585,32 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $phoneNum = preg_replace( "/[^0-9]/", "", $phoneNum);
         $phoneNum = substr($phoneNum, 0, 12);
         $params = array(
-            'username'                       =>  $c->getEmail(),
-            'passwd'                         =>  $c->getPassword(),
-            'name'                           =>  $c->getName(),
-            'company'                        =>  $company,
-            'address-line-1'                 =>  $c->getAddress1(),
-            'address-line-2'                 =>  $c->getAddress2(),
-            'city'                           =>  $c->getCity(),
-            'state'                          =>  $c->getState(),
-            'country'                        =>  $c->getCountry(),
-            'zipcode'                        =>  $c->getZip(),
-            'phone-cc'                       =>  $c->getTelCc(),
-            'phone'                          =>  $phoneNum,
-            'lang-pref'                      =>  'en',
-            'sales-contact-id'               =>  '',
-            'accounting-currency-symbol'     =>  'USD',
-            'selling-currency-symbol'        =>  'USD',
-            'request-headers'                =>  '',
+            'email'              =>  $c->getEmail(),
+            'password'           =>  $c->getPassword(),
+            'name'               =>  $c->getName(),
+            'company'            =>  $company,
+            'address_line_1'     =>  $c->getAddress1(),
+            'address_line_2'     =>  $c->getAddress2(),
+            'city'               =>  $c->getCity(),
+            'state'              =>  $c->getState(),
+            'country_code'       =>  $c->getCountry(),
+            'zipcode'            =>  $c->getZip(),
+            'tel_cc_no'          =>  $c->getTelCc(),
+            'tel_no'             =>  $phoneNum,
         );
         $optional_params = array(
-            'address-line-3'                 =>  '',
-            'alt-phone-cc'                   =>  '',
-            'alt-phone'                      =>  '',
-            'fax-cc'                         =>  '',
-            'fax'                            =>  '',
-            'mobile-cc'                      =>  '',
-            'mobile'                         =>  '',
+            'address_line_3'     =>  '',
+            'alt_tel_cc_no'      =>  '',
+            'alt_tel_no'         =>  '',
+            'fax_cc_no'          =>  '',
+            'fax_no'             =>  '',
+            'mobile_cc_no'       =>  '',
+            'mobile_no'          =>  '',
         );
         $params = array_merge($optional_params, $params);
-        $customer_id = $this->_makeRequest('customers/signup', $params, 'POST');
-        return $customer_id;
+
+        $customer = $this->_makeRequest('customers', $params, 'post');
+        return array($customer);
     }
     
     public function getContactIdForDomain(Registrar_Domain $domain)
@@ -813,7 +831,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-            // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
 
         switch ($method) {
