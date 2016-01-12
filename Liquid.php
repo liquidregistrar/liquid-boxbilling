@@ -169,6 +169,8 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      */
     public function modifyContact(Registrar_Domain $domain)
     {
+        $tld = str_replace('.', '', $domain->getTld());
+
         $cust = $domain->getContactRegistrar();
         $cust_email = $cust->getEmail();
 
@@ -184,7 +186,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             }
         }
 
-        $cdetails = $this->_getDefaultContactDetails($customer_id);
+        $cdetails = $this->_getDefaultContactDetails($customer_id, $tld, $cust);
         $contact_id = $cdetails['registrant_contact']['contact_id'];
         $c = $domain->getContactRegistrar();
         
