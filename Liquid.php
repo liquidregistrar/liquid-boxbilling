@@ -732,14 +732,14 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                     $extra['asia_other_entity_type']         = 'passport';
                     $extra['asia_identification_type']       = 'other';
                     $extra['asia_other_identification_type'] = 'naturalPerson';
-                    $extra['asia_identification_number']     = $cust->getDocumentNr();
+                    $extra['asia_identification_number']     = !empty($cust->getDocumentNr()) ? $cust->getDocumentNr() : $phoneNum;
                     $params['extra'] = http_build_query($extra);
                 } elseif ($tld == 'us') {
                     $extra['us_category'] = 'citizen';
                     $extra['us_purpose']  = 'personal';
                     $params['extra'] = http_build_query($extra);
                 } else {
-                    throw new Registrar_Exception('TLD Not Support.');
+                    throw new Registrar_Exception('TLD '.$tld.' Not Support');
                 }
                 $optional_params = array(
                     'address_line_3'     =>  '',
@@ -755,7 +755,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 try {
                     $contact = $this->_makeRequest('customers/'.$customer_id.'/contacts', $params, 'post');
                 } catch(Registrar_Exception $e) {
-                    throw new Registrar_Exception('Error Creating .'.$tld.' Contact.');
+                    throw new Registrar_Exception('Error Creating .'.$tld.' Contact : '.$e->getMessage());
                 }
 
                 // jika berhasil gunakan contactnya
