@@ -17,7 +17,7 @@
  * @version   $Id$
  */
 /**
- * HTTP API documentation http://cp.onlyfordemo.net/kb/answer/744
+ * HTTP API documentation http://liquid-docs.readthedocs.org/en/latest/restapi.html
  */
 class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 {
