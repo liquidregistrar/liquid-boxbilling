@@ -169,7 +169,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      */
     public function modifyContact(Registrar_Domain $domain)
     {
-        $tld = str_replace('.', '', $domain->getTld());
+        $tld = ltrim($domain->getTld(),'.');
 
         $cust = $domain->getContactRegistrar();
         $cust_email = $cust->getEmail();
@@ -217,7 +217,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
      */
     public function transferDomain(Registrar_Domain $domain)
     {
-        $tld = str_replace('.', '', $domain->getTld());
+        $tld = ltrim($domain->getTld(),'.');
 
         $cust = $domain->getContactRegistrar();
         $cust_email = $cust->getEmail();
@@ -421,8 +421,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             return true;
         }
         
-        $tld_ = $domain->getTld();
-        $tld = str_replace('.', '', $tld_);
+        $tld = ltrim($domain->getTld(),'.');
 
         $cust = $domain->getContactRegistrar();
         $cust_email = $cust->getEmail();
