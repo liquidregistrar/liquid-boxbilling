@@ -346,17 +346,6 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
     
-    public function getEpp(Registrar_Domain $domain)
-    {
-        $params = array(
-            'domain_id'      =>  $this->_getDomainOrderId($domain),
-        );
-        $data = $this->_makeRequest('domains/'.$params['domain_id'].'/auth_code', $params);
-        if(empty($data)) {
-            throw new Registrar_Exception('Domain EPP code can be retrieved from domain registrar');
-        }
-        return $data;
-    }
     /**
      * Cek detail domain dan simpan
      * @return boolean
