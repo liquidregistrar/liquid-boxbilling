@@ -345,7 +345,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
 
         throw new Registrar_Exception("Registrar Error<br/>Website doesn't exist for " . $domain_name);
     }
-
+    
     /**
      * Cek detail domain dan simpan
      * @return boolean
@@ -355,9 +355,9 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $domain_id = $this->_getDomainOrderId($d);
         $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
-        $d->setRegistrationTime(strtotime($data['creation_date']));
-        $d->setExpirationTime(strtotime($data['end_date']));
-        $d->setEpp($data['auth_code']);
+        $d->setRegistrationTime(strtotime($data['creation_time']));
+        $d->setExpirationTime(strtotime($data['expiry_date']));
+        $d->setEpp($this->getEpp($d));
         $d->setPrivacyEnabled(($data['privacy_protection_enabled'] == 'true'));
         
         /* Contact details */
@@ -398,7 +398,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         
         return $d;
     }
-
+    
     /**
      * Hapus domain
      * @return boolean
