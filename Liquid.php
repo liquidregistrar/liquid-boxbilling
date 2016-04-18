@@ -711,6 +711,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                 $phoneNum = $cust->getTel();
                 $phoneNum = preg_replace( "/[^0-9]/", "", $phoneNum);
                 $phoneNum = substr($phoneNum, 0, 12);
+                $docNumber = $cust->getDocumentNr();
                 $params = array(
                     'email'              =>  $cust->getEmail(),
                     'name'               =>  $cust->getName(),
@@ -731,7 +732,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
                     $extra['asia_other_entity_type']         = 'passport';
                     $extra['asia_identification_type']       = 'other';
                     $extra['asia_other_identification_type'] = 'naturalPerson';
-                    $extra['asia_identification_number']     = !empty($cust->getDocumentNr()) ? $cust->getDocumentNr() : $phoneNum;
+                    $extra['asia_identification_number']     = !empty($docNumber) ? $docNumber : $phoneNum;
                     $params['extra'] = http_build_query($extra);
                 } elseif ($tld == 'us') {
                     $extra['us_category'] = 'citizen';
