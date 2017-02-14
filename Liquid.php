@@ -629,8 +629,11 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
             try {
                 $result = $this->_createCustomer($domain);
             } catch(Registrar_Exception $e) {
-                $result = $this->_makeRequest('customers?'.$param_search);
+                // jika gagal, keluarkan pesan error
+                throw new Registrar_Exception('Error Creating Customer : '.$e->getMessage().' Please check your Client Detail.');
             }
+            // jika berhasil, cek kembali
+            $result = $this->_makeRequest('customers?'.$param_search);
         }
 
         return $result;
