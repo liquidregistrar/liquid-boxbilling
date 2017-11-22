@@ -356,7 +356,7 @@ class Registrar_Adapter_Liquid extends Registrar_AdapterAbstract
         $data = $this->_makeRequest('domains/'.$domain_id.'?fields=all');
         
         $d->setRegistrationTime(strtotime($data['creation_time']));
-        $d->setExpirationTime(strtotime($data['end_time']));
+        $d->setExpirationTime(strtotime($data['expiry_date']));
         $d->setEpp($this->getEpp($d));
         $d->setPrivacyEnabled(($data['privacy_protection_enabled'] == 'true'));
         
